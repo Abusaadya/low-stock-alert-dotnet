@@ -56,6 +56,8 @@ public class WebhooksController : BaseController
         var quantity = data.GetProperty("quantity").GetInt32();
         var name = data.TryGetProperty("name", out var n) ? n.GetString() ?? "Unknown Product" : "Unknown Product";
         
+        Console.WriteLine($"[Debug] Product: {name} | Quantity: {quantity} | Threshold: {merchant.AlertThreshold} | TelegramId: {merchant.TelegramChatId}");
+        
         // Check Threshold
         if (quantity <= merchant.AlertThreshold)
         {
@@ -71,6 +73,7 @@ public class WebhooksController : BaseController
             // 2. WhatsApp
             if (!string.IsNullOrEmpty(merchant.TelegramChatId)) // Reusing field for phone number
             {
+                Console.WriteLine($"[WhatsApp] Attempting to send to: {merchant.TelegramChatId}");
                 var message = $"⚠️ *تنبيه مخزون منخفض*\n\n" +
                              $"المنتج: *{name}*\n" +
                              $"الكمية الحالية: {quantity}\n" +
@@ -85,6 +88,10 @@ public class WebhooksController : BaseController
             {
                 await SendAutomationWebhook(merchant, name, quantity, data);
             }
+        }
+        else
+        {
+            Console.WriteLine($"[Info] Quantity {quantity} is above threshold {merchant.AlertThreshold}. No alert sent.");
         }
     }
 
