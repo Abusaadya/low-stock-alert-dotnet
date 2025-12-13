@@ -59,16 +59,6 @@ public class WebhooksController : BaseController
 
     private async Task ProcessProductUpdate(long merchantId, JsonElement data)
     {
-        var merchant = await _context.Merchants.FindAsync(merchantId);
-        if (merchant == null) 
-        {
-            _logger.LogWarning("[Error] Merchant {Id} not found in database. Cannot process webhook.", merchantId);
-            return;
-        }
-
-        // Log the full data payload to see what Salla sends
-        _logger.LogInformation("[Debug] Full product data: {Data}", data.ToString());
-
         // Safely try to get quantity
         if (!data.TryGetProperty("quantity", out var qtyElement))
         {
@@ -78,9 +68,18 @@ public class WebhooksController : BaseController
 
         var quantity = qtyElement.GetInt32();
         var name = data.TryGetProperty("name", out var n) ? n.GetString() ?? "Unknown Product" : "Unknown Product";
-        
-        _logger.LogInformation("[Debug] Product: {Name} | Quantity: {Quantity} | Threshold: {Threshold} | TelegramId: {TelegramId}", 
-            name, quantity, merchant.AlertThreshold, merchant.TelegramChatId);
+
+        _logger.LogInformation(">>> [Debug] Incoming Webhook Data -> MerchantId: {MerchantId} | Product: {Name} | Quantity: {Quantity}", merchantId, name, quantity);
+
+        var merchant = await _context.Merchants.FindAsync(merchantId);
+        if (merchant == null) 
+        {
+            _logger.LogWarning("[Error] Merchant {Id} not found in database. Cannot process webhook.", merchantId);
+            return;
+        }
+
+        // Log the full data payload to see what Salla sends
+        _logger.LogInformation("[Debug] Full product data: {Data}", data.ToString());
         
         // Check Threshold
         if (quantity <= merchant.AlertThreshold)
