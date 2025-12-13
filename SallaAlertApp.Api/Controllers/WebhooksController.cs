@@ -55,7 +55,17 @@ public class WebhooksController : BaseController
         var merchant = await _context.Merchants.FindAsync(merchantId);
         if (merchant == null) return;
 
-        var quantity = data.GetProperty("quantity").GetInt32();
+        // Log the full data payload to see what Salla sends
+        _logger.LogInformation("[Debug] Full product data: {Data}", data.ToString());
+
+        // Safely try to get quantity
+        if (!data.TryGetProperty("quantity", out var qtyElement))
+        {
+            _logger.LogWarning("[Warning] No 'quantity' field in product data. Skipping alert.");
+            return;
+        }
+
+        var quantity = qtyElement.GetInt32();
         var name = data.TryGetProperty("name", out var n) ? n.GetString() ?? "Unknown Product" : "Unknown Product";
         
         _logger.LogInformation("[Debug] Product: {Name} | Quantity: {Quantity} | Threshold: {Threshold} | TelegramId: {TelegramId}", 
@@ -64,19 +74,19 @@ public class WebhooksController : BaseController
         // Check Threshold
         if (quantity <= merchant.AlertThreshold)
         {
-            Console.WriteLine($"[Alert] Low stock for {name}: {quantity} <= {merchant.AlertThreshold}");
+            _logger.LogInformation("[Alert] Low stock for {Name}: {Quantity} <= {Threshold}", name, quantity, merchant.AlertThreshold);
 
             // 1. Email
             if (merchant.NotifyEmail && !string.IsNullOrEmpty(merchant.AlertEmail))
             {
                 // TODO: Implement proper SMTP Service
-                Console.WriteLine($"[Mock Email] Sending email to {merchant.AlertEmail}");
+                _logger.LogInformation("[Mock Email] Sending email to {Email}", merchant.AlertEmail);
             }
 
             // 2. WhatsApp
             if (!string.IsNullOrEmpty(merchant.TelegramChatId)) // Reusing field for phone number
             {
-                Console.WriteLine($"[WhatsApp] Attempting to send to: {merchant.TelegramChatId}");
+                _logger.LogInformation("[WhatsApp] Attempting to send to: {Phone}", merchant.TelegramChatId);
                 var message = $"⚠️ *تنبيه مخزون منخفض*\n\n" +
                              $"المنتج: *{name}*\n" +
                              $"الكمية الحالية: {quantity}\n" +
@@ -94,7 +104,7 @@ public class WebhooksController : BaseController
         }
         else
         {
-            Console.WriteLine($"[Info] Quantity {quantity} is above threshold {merchant.AlertThreshold}. No alert sent.");
+            _logger.LogInformation("[Info] Quantity {Quantity} is above threshold {Threshold}. No alert sent.", quantity, merchant.AlertThreshold);
         }
     }
 
