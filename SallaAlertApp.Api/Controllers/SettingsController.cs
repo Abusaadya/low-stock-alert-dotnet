@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SallaAlertApp.Api.Data;
 using SallaAlertApp.Api.Models;
 
@@ -17,10 +18,22 @@ public class SettingsController : BaseController
     [HttpPost]
     public async Task<IActionResult> SaveSettings([FromBody] SettingsRequest request)
     {
-        if (request.MerchantId == 0) return BadRequest("Merchant ID required");
-
-        var merchant = await _context.Merchants.FindAsync(request.MerchantId);
-        if (merchant == null) return NotFound("Merchant not found");
+        Merchant? merchant;
+        
+        if (request.MerchantId == 0)
+        {
+            // Fallback: Use the most recently updated merchant
+            merchant = await _context.Merchants
+                .OrderByDescending(m => m.UpdatedAt)
+                .FirstOrDefaultAsync();
+            
+            if (merchant == null) return BadRequest("No merchants found. Please install the app first.");
+        }
+        else
+        {
+            merchant = await _context.Merchants.FindAsync(request.MerchantId);
+            if (merchant == null) return NotFound("Merchant not found");
+        }
 
         // Update fields
         merchant.AlertThreshold = request.AlertThreshold;
