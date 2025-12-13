@@ -20,7 +20,7 @@ if (app.Environment.IsDevelopment())
     // app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Disabled for Railway (SSL Termination at Edge)
 app.UseStaticFiles(); // Enable wwwroot
 app.UseAuthorization();
 
