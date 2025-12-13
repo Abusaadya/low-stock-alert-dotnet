@@ -60,7 +60,11 @@ public class WebhooksController : BaseController
     private async Task ProcessProductUpdate(long merchantId, JsonElement data)
     {
         var merchant = await _context.Merchants.FindAsync(merchantId);
-        if (merchant == null) return;
+        if (merchant == null) 
+        {
+            _logger.LogWarning("[Error] Merchant {Id} not found in database. Cannot process webhook.", merchantId);
+            return;
+        }
 
         // Log the full data payload to see what Salla sends
         _logger.LogInformation("[Debug] Full product data: {Data}", data.ToString());
