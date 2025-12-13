@@ -6,30 +6,42 @@ namespace SallaAlertApp.Api.Models;
 public class Merchant
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.None)] // Salla ID is provided, not auto-generated
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    [Column("merchant_id")]
     public long MerchantId { get; set; }
 
     [Required]
+    [Column("access_token")]
     public string AccessToken { get; set; } = string.Empty;
 
     [Required]
+    [Column("refresh_token")]
     public string RefreshToken { get; set; } = string.Empty;
 
+    [Column("expires_in")]
     public int ExpiresIn { get; set; }
 
+    [Column("alert_threshold")]
     public int AlertThreshold { get; set; } = 5;
 
+    [Column("alert_email")]
     public string? AlertEmail { get; set; }
 
+    [Column("notify_email")]
     public bool NotifyEmail { get; set; } = true;
 
-    // Automation Fields
+    [Column("custom_webhook_url")]
     public string? CustomWebhookUrl { get; set; }
     
+    [Column("telegram_chat_id")]
     public string? TelegramChatId { get; set; }
 
+    [Column("notify_webhook")]
     public bool NotifyWebhook { get; set; } = false;
 
+    [Column("updated_at")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    
+    [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
