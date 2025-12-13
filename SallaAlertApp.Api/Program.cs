@@ -28,17 +28,20 @@ app.MapControllers();
 // Serve settings.html at root/settings
 app.MapGet("/settings", async (HttpContext context) => {
     context.Response.ContentType = "text/html";
-    await context.Response.SendFileAsync("wwwroot/settings.html");
+    var path = Path.Combine(app.Environment.WebRootPath, "settings.html");
+    await context.Response.SendFileAsync(path);
 });
 
 app.MapGet("/privacy", async (HttpContext context) => {
     context.Response.ContentType = "text/html";
-    await context.Response.SendFileAsync("wwwroot/privacy.html");
+    var path = Path.Combine(app.Environment.WebRootPath, "privacy.html");
+    await context.Response.SendFileAsync(path);
 });
 
 app.MapGet("/terms", async (HttpContext context) => {
     context.Response.ContentType = "text/html";
-    await context.Response.SendFileAsync("wwwroot/terms.html");
+    var path = Path.Combine(app.Environment.WebRootPath, "terms.html");
+    await context.Response.SendFileAsync(path);
 });
 
 app.Run();
