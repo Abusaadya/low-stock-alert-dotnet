@@ -148,14 +148,13 @@
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
-                merchantId: merchantId, // Normally handled by session
-                alert_threshold: document.getElementById('threshold').value,
-                alert_email: document.getElementById('email').value,
-                // New Fields
-                custom_webhook_url: document.getElementById('webhook').value,
-                telegram_chat_id: document.getElementById('telegramId').value,
-                notify_email: document.getElementById('notifyEmail').checked,
-                notify_webhook: document.getElementById('notifyWebhook').checked
+                MerchantId: 0, // Will use fallback logic
+                AlertThreshold: parseInt(document.getElementById('threshold').value),
+                AlertEmail: document.getElementById('email').value,
+                CustomWebhookUrl: document.getElementById('webhook').value,
+                TelegramChatId: document.getElementById('telegramId').value,
+                NotifyEmail: document.getElementById('notifyEmail').checked,
+                NotifyWebhook: document.getElementById('notifyWebhook').checked
             };
 
             try {
