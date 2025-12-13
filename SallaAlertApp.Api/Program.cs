@@ -32,16 +32,5 @@ app.MapGet("/settings", async (HttpContext context) => {
     await context.Response.SendFileAsync(path);
 });
 
-app.MapGet("/privacy", async (HttpContext context) => {
-    context.Response.ContentType = "text/html";
-    var path = Path.Combine(app.Environment.WebRootPath, "privacy.html");
-    await context.Response.SendFileAsync(path);
-});
-
-app.MapGet("/terms", async (HttpContext context) => {
-    context.Response.ContentType = "text/html";
-    var path = Path.Combine(app.Environment.WebRootPath, "terms.html");
-    await context.Response.SendFileAsync(path);
-});
 
 app.Run();
