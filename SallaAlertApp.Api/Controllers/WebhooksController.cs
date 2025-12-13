@@ -8,6 +8,10 @@ namespace SallaAlertApp.Api.Controllers;
 [Route("webhooks")]
 public class WebhooksController : BaseController
 {
+    // Static fields for debugging (store last webhook)
+    public static string? LastPayload { get; set; }
+    public static DateTime? LastPayloadTime { get; set; }
+
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
@@ -28,6 +32,9 @@ public class WebhooksController : BaseController
     {
         try
         {
+            // Store payload for debugging
+            LastPayload = payload.ToString();
+            LastPayloadTime = DateTime.UtcNow;
             // Extract core fields
             var eventName = payload.GetProperty("event").GetString();
             var merchantId = payload.GetProperty("merchant").GetInt64();

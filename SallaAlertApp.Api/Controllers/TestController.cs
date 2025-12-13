@@ -58,4 +58,17 @@ public class TestController : BaseController
             updatedAt = merchant.UpdatedAt
         });
     }
+
+    [HttpGet("last-webhook")]
+    public IActionResult GetLastWebhook()
+    {
+        if (Controllers.WebhooksController.LastPayload == null)
+            return NotFound("No webhook received yet");
+
+        return Ok(new
+        {
+            receivedAt = Controllers.WebhooksController.LastPayloadTime,
+            payload = Controllers.WebhooksController.LastPayload
+        });
+    }
 }
