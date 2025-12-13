@@ -12,13 +12,15 @@ public class WebhooksController : BaseController
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
     private readonly Services.WhatsAppService _whatsapp;
+    private readonly ILogger<WebhooksController> _logger;
 
-    public WebhooksController(ApplicationDbContext context, IConfiguration config, Services.WhatsAppService whatsapp)
+    public WebhooksController(ApplicationDbContext context, IConfiguration config, Services.WhatsAppService whatsapp, ILogger<WebhooksController> logger)
     {
         _context = context;
         _config = config;
         _http = new HttpClient();
         _whatsapp = whatsapp;
+        _logger = logger;
     }
 
     [HttpPost("app-events")]
@@ -31,7 +33,7 @@ public class WebhooksController : BaseController
             var merchantId = payload.GetProperty("merchant").GetInt64();
             var data = payload.GetProperty("data");
 
-            Console.WriteLine($"[Webhook] Event: {eventName} | Merchant: {merchantId}");
+            _logger.LogInformation("[Webhook] Event: {EventName} | Merchant: {MerchantId}", eventName, merchantId);
 
             if (eventName == "product.updated")
             {
@@ -43,7 +45,7 @@ public class WebhooksController : BaseController
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Webhook Error: {ex.Message}");
+            _logger.LogError(ex, "Webhook Error: {Message}", ex.Message);
             return StatusCode(500, ex.Message);
         }
     }
@@ -56,7 +58,8 @@ public class WebhooksController : BaseController
         var quantity = data.GetProperty("quantity").GetInt32();
         var name = data.TryGetProperty("name", out var n) ? n.GetString() ?? "Unknown Product" : "Unknown Product";
         
-        Console.WriteLine($"[Debug] Product: {name} | Quantity: {quantity} | Threshold: {merchant.AlertThreshold} | TelegramId: {merchant.TelegramChatId}");
+        _logger.LogInformation("[Debug] Product: {Name} | Quantity: {Quantity} | Threshold: {Threshold} | TelegramId: {TelegramId}", 
+            name, quantity, merchant.AlertThreshold, merchant.TelegramChatId);
         
         // Check Threshold
         if (quantity <= merchant.AlertThreshold)
