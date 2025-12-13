@@ -97,11 +97,12 @@ public class OAuthController : BaseController
 
             await _context.SaveChangesAsync();
 
-            return Content($"<h1>Welcome {merchantName}</h1><p>App Installed Successfully on .NET!</p>", "text/html");
+            // Redirect to settings page after successful installation
+            return Redirect("/settings");
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, $"Error: {ex.Message}");
         }
     }
 }
