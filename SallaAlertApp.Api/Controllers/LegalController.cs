@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace SallaAlertApp.Api.Controllers;
 
-[Route("")]
-public class LegalController : BaseController
+[ApiController]
+public class LegalController : ControllerBase
 {
-    [HttpGet("privacy")]
+    [Route("privacy")]
+    [HttpGet]
     public IActionResult Privacy()
     {
         var html = @"<!DOCTYPE html>
@@ -64,7 +65,8 @@ public class LegalController : BaseController
         return Content(html, "text/html");
     }
 
-    [HttpGet("terms")]
+    [Route("terms")]
+    [HttpGet]
     public IActionResult Terms()
     {
         var html = @"<!DOCTYPE html>
