@@ -11,12 +11,14 @@ public class WebhooksController : BaseController
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
+    private readonly Services.WhatsAppService _whatsapp;
 
-    public WebhooksController(ApplicationDbContext context, IConfiguration config)
+    public WebhooksController(ApplicationDbContext context, IConfiguration config, Services.WhatsAppService whatsapp)
     {
         _context = context;
         _config = config;
         _http = new HttpClient();
+        _whatsapp = whatsapp;
     }
 
     [HttpPost("app-events")]
@@ -66,7 +68,19 @@ public class WebhooksController : BaseController
                 Console.WriteLine($"[Mock Email] Sending email to {merchant.AlertEmail}");
             }
 
-            // 2. Automation (Make.com / Telegram)
+            // 2. WhatsApp
+            if (!string.IsNullOrEmpty(merchant.TelegramChatId)) // Reusing field for phone number
+            {
+                var message = $"⚠️ *تنبيه مخزون منخفض*\n\n" +
+                             $"المنتج: *{name}*\n" +
+                             $"الكمية الحالية: {quantity}\n" +
+                             $"الحد الأدنى: {merchant.AlertThreshold}\n\n" +
+                             $"يرجى إعادة التخزين قريباً!";
+                
+                await _whatsapp.SendWhatsAppMessage(merchant.TelegramChatId, message);
+            }
+
+            // 3. Automation (Make.com / Telegram)
             if (merchant.NotifyWebhook && !string.IsNullOrEmpty(merchant.CustomWebhookUrl))
             {
                 await SendAutomationWebhook(merchant, name, quantity, data);
