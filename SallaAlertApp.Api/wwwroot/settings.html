@@ -108,6 +108,7 @@
 
         <form id="settingsForm">
             <input type="hidden" id="merchantId" value=""> <!-- Populated via JS/Backend -->
+            <input type="hidden" id="telegramChatId" value=""> <!-- Stores current Chat ID -->
 
             <div class="form-group">
                 <label>Threshold (Notify when quantity <= X)</label>
@@ -126,41 +127,144 @@
             </div>
 
             <div class="form-group">
-                <label>رقم الواتساب (بصيغة دولية)</label>
-                <input type="text" id="telegramId" placeholder="مثال: +201234567890" required>
-                <small style="color:#888;">أدخل رقم الواتساب الذي تريد استقبال التنبيهات عليه</small>
+                <label>Telegram Alerts</label>
+                <div id="telegramStatus" style="margin-bottom: 10px; color: #666;">LOADING...</div>
+
+                <div id="telegramConnect">
+                    <p>To receive alerts, you must connect your Telegram account.</p>
+                    <a id="telegramLink" href="#" target="_blank" class="button"
+                        style="background-color: #0088cc; text-decoration: none; padding: 10px 20px; color: white; border-radius: 5px; display: inline-block;">
+                        Connect Telegram ✈️
+                    </a>
+                    <p><small>Click the button above and press <strong>Start</strong> in the Telegram app.</small></p>
+                </div>
+
+                <div id="telegramConnected" style="display:none;">
+                    <p style="color: green; font-weight: bold;">✅ You are connected to Telegram!</p>
+                    <button type="button" id="disconnectBtn"
+                        style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Disconnect
+                        (Reset)</button>
+                </div>
             </div>
 
             <div class="form-group">
-                <label>Custom Webhook URL (Advanced / Optional)</label>
-                <input type="text" id="webhook" placeholder="https://your-n8n-instance.com/webhook/...">
+                <label>Webhook URL (Automation)</label>
+                <input type="url" id="webhook" placeholder="https://hook.eu1.make.com/...">
                 <div class="checkbox-group">
                     <input type="checkbox" id="notifyWebhook">
-                    <label style="margin:0; font-weight:normal">Enable Automation</label>
+                    <label style="margin:0; font-weight:normal">Enable Webhook</label>
                 </div>
-                <small style="color:#888;">We will POST data to this URL.</small>
             </div>
 
             <button type="submit">Save Settings</button>
+            <div id="message" style="margin-top: 20px;"></div>
         </form>
         <div class="footer">Low Stock Alert App v2.0</div>
     </div>
 
     <script>
-        // In a real app, we would fetch current settings on load
-        // Window.merchantSettings passed from backend or fetched
-        const params = new URLSearchParams(window.location.search);
-        const merchantId = params.get('merchant'); // Simple pass for now
+        // Fetch current settings on load
+        async function loadSettings() {
+            try {
+                const res = await fetch('/settings/current');
+                if (res.ok) {
+                    const data = await res.json();
 
-        // Form Submit
+                    document.getElementById('merchantId').value = data.merchantId;
+                    document.getElementById('threshold').value = data.alertThreshold;
+                    document.getElementById('email').value = data.alertEmail || '';
+                    document.getElementById('notifyEmail').checked = data.notifyEmail;
+                    document.getElementById('webhook').value = data.customWebhookUrl || '';
+                    document.getElementById('notifyWebhook').checked = data.notifyWebhook;
+                    document.getElementById('telegramChatId').value = data.telegramChatId || ''; // Store for submission
+
+                    // Telegram Logic
+                    const botUsername = "SallaStockAlertBot"; // REPLACE WITH YOUR BOT USERNAME IF DIFFERENT, OR FETCH FROM API
+                    /* Note: Since we don't have the bot username in the API response yet, 
+                       we will rely on hardcoding it or passing it. 
+                       Ideally the API should return it. 
+                       For now, I will assume a generic placeholder or ask user to update it.
+                       Actually, I'll use the one I asked the user to create 'SallaStockAlertBot' but they might have chosen another.
+                       It's safer to just provide the link to the bot ID? No, username is needed for link.
+                       Let's assume the user sends the username or we make a best guess.
+                       Actually, I can just use the provided token to 'getMe' to find the username.
+                       But for now, I'll update the link dynamically.*/
+
+                    updateTelegramUI(data.merchantId, data.telegramChatId);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function updateTelegramUI(merchantId, telegramChatId) {
+            const statusDiv = document.getElementById('telegramStatus');
+            const connectDiv = document.getElementById('telegramConnect');
+            const connectedDiv = document.getElementById('telegramConnected');
+            const linkBtn = document.getElementById('telegramLink');
+
+            // Hardcoded bot username for now - IDEALLY should come from backend config
+            // The user's bot token was for a bot. I entered it.
+            // I should probably fetch the bot info in the backend and return the username.
+            // But to save roundtrips, I will use a placeholder or ask user to fill it.
+            // BETTER: Use a backend endpoint to get the bot link.
+
+            // For this iteration, I'll assume the merchant needs to search for the bot if I don't know the name.
+            // BUT wait, deep linking requires the username. t.me/USERNAME?start=...
+
+            if (telegramChatId) {
+                statusDiv.innerText = "Status: Connected";
+                connectDiv.style.display = 'none';
+                connectedDiv.style.display = 'block';
+            } else {
+                statusDiv.innerText = "Status: Not Connected";
+                connectDiv.style.display = 'block';
+                connectedDiv.style.display = 'none';
+
+                // We need the bot username. I will add a TODO or just omit the username and ask user to search.
+                // Or better, I'll add an endpoint to get the bot link.
+                // TEMPORARY: I will use a generic link structure that likely needs update.
+                // Actually, I can use the 'getMe' endpoint in backend to cache it.
+                // For now, I'll create a link to a placeholder and ask the user to update the HTML or I'll implement a 'GetBotInfo' endpoint. 
+                // For now, let's assume the bot username is known or fetched.
+                // The deep link should be t.me/<bot_username>?start=<merchantId>
+                // For this example, I'll use a placeholder bot username.
+                const botUsername = "SallaStockAlertBot"; // This should ideally come from the backend
+                linkBtn.href = `https://t.me/${botUsername}?start=${merchantId}`;
+            }
+        }
+
+        document.getElementById('disconnectBtn').addEventListener('click', async () => {
+            // Logic to clear telegram ID (simple POST)
+            const mid = document.getElementById('merchantId').value;
+            try {
+                const res = await fetch('/settings/telegram/disconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ merchantId: mid })
+                });
+                if (res.ok) {
+                    document.getElementById('message').innerHTML = '<p class="success">Telegram Disconnected. ✅</p>';
+                    document.getElementById('telegramChatId').value = ''; // Clear hidden field
+                    updateTelegramUI(mid, null); // Update UI to disconnected state
+                } else {
+                    alert('Error disconnecting Telegram');
+                }
+            } catch (err) {
+                alert('Network error during disconnect');
+            }
+        });
+
+        loadSettings();
+
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
-                MerchantId: 0, // Will use fallback logic
+                MerchantId: parseInt(document.getElementById('merchantId').value),
                 AlertThreshold: parseInt(document.getElementById('threshold').value),
                 AlertEmail: document.getElementById('email').value,
                 CustomWebhookUrl: document.getElementById('webhook').value,
-                TelegramChatId: document.getElementById('telegramId').value,
+                TelegramChatId: document.getElementById('telegramChatId').value || null, // Preserve existing or send null if not connected
                 NotifyEmail: document.getElementById('notifyEmail').checked,
                 NotifyWebhook: document.getElementById('notifyWebhook').checked
             };

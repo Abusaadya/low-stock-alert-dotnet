@@ -8,8 +8,8 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<SallaAlertApp.Api.Data.ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add WhatsApp Service
-builder.Services.AddSingleton<SallaAlertApp.Api.Services.WhatsAppService>();
+// Add Telegram Service
+builder.Services.AddSingleton<SallaAlertApp.Api.Services.TelegramService>();
 
 var app = builder.Build();
 

@@ -15,15 +15,15 @@ public class WebhooksController : BaseController
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _config;
     private readonly HttpClient _http;
-    private readonly Services.WhatsAppService _whatsapp;
+    private readonly Services.TelegramService _telegram;
     private readonly ILogger<WebhooksController> _logger;
 
-    public WebhooksController(ApplicationDbContext context, IConfiguration config, Services.WhatsAppService whatsapp, ILogger<WebhooksController> logger)
+    public WebhooksController(ApplicationDbContext context, IConfiguration config, Services.TelegramService telegram, ILogger<WebhooksController> logger)
     {
         _context = context;
         _config = config;
         _http = new HttpClient();
-        _whatsapp = whatsapp;
+        _telegram = telegram;
         _logger = logger;
     }
 
@@ -90,17 +90,17 @@ public class WebhooksController : BaseController
                 _logger.LogInformation("[Mock Email] Sending email to {Email}", merchant.AlertEmail);
             }
 
-            // 2. WhatsApp
-            if (!string.IsNullOrEmpty(merchant.TelegramChatId)) // Reusing field for phone number
+            // 2. Telegram
+            if (!string.IsNullOrEmpty(merchant.TelegramChatId)) 
             {
-                _logger.LogInformation("[WhatsApp] Attempting to send to: {Phone}", merchant.TelegramChatId);
+                _logger.LogInformation("[Telegram] Attempting to send to: {ChatId}", merchant.TelegramChatId);
                 var message = $"⚠️ *تنبيه مخزون منخفض*\n\n" +
                              $"المنتج: *{name}*\n" +
                              $"الكمية الحالية: {quantity}\n" +
                              $"الحد الأدنى: {merchant.AlertThreshold}\n\n" +
                              $"يرجى إعادة التخزين قريباً!";
                 
-                await _whatsapp.SendWhatsAppMessage(merchant.TelegramChatId, message);
+                await _telegram.SendMessageAsync(merchant.TelegramChatId, message);
             }
 
             // 3. Automation (Make.com / Telegram)

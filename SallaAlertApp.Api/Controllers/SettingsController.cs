@@ -15,6 +15,28 @@ public class SettingsController : BaseController
         _context = context;
     }
 
+    [HttpGet("current")]
+    public async Task<IActionResult> GetCurrentSettings()
+    {
+        // Fallback: Use the most recently updated merchant
+        var merchant = await _context.Merchants
+            .OrderByDescending(m => m.UpdatedAt)
+            .FirstOrDefaultAsync();
+
+        if (merchant == null) return NotFound("No merchant found");
+
+        return Ok(new
+        {
+            merchant.MerchantId,
+            merchant.AlertThreshold,
+            merchant.AlertEmail,
+            merchant.NotifyEmail,
+            merchant.CustomWebhookUrl,
+            merchant.TelegramChatId, // To check if connected
+            merchant.NotifyWebhook
+        });
+    }
+
     [HttpPost]
     public async Task<IActionResult> SaveSettings([FromBody] SettingsRequest request)
     {
@@ -48,6 +70,18 @@ public class SettingsController : BaseController
         await _context.SaveChangesAsync();
 
         return Ok("Settings Updated");
+    }
+
+    [HttpPost("telegram/disconnect")]
+    public async Task<IActionResult> DisconnectTelegram([FromBody] SettingsRequest request)
+    {
+        var merchant = await _context.Merchants.FindAsync(request.MerchantId);
+        if (merchant == null) return NotFound("Merchant not found");
+
+        merchant.TelegramChatId = null;
+        await _context.SaveChangesAsync();
+
+        return Ok("Disconnected");
     }
 }
 
