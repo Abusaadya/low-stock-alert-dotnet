@@ -7,27 +7,27 @@ namespace SallaAlertApp.Api.Controllers;
 [Route("test")]
 public class TestController : BaseController
 {
-    private readonly WhatsAppService _whatsapp;
+    private readonly TelegramService _telegram;
 
-    public TestController(WhatsAppService whatsapp)
+    public TestController(TelegramService telegram)
     {
-        _whatsapp = whatsapp;
+        _telegram = telegram;
     }
 
-    [HttpGet("whatsapp")]
-    public async Task<IActionResult> TestWhatsApp([FromQuery] string phone)
+    [HttpGet("telegram")]
+    public async Task<IActionResult> TestTelegram([FromQuery] string chatId)
     {
-        if (string.IsNullOrEmpty(phone))
-            return BadRequest("Please provide ?phone=+201234567890");
+        if (string.IsNullOrEmpty(chatId))
+            return BadRequest("Please provide ?chatId=12345");
 
         try
         {
-            var message = "🧪 Test message from Salla Alert App!\n\nIf you received this, WhatsApp integration is working! ✅";
-            var result = await _whatsapp.SendWhatsAppMessage(phone, message);
+            var message = "🧪 Test message from Salla Alert App!\n\nIf you received this, Telegram integration is working! ✅";
+            var result = await _telegram.SendMessageAsync(chatId, message);
             
             return Ok(new { 
                 success = result, 
-                message = result ? "Message sent successfully!" : "Failed to send message. Check Twilio credentials." 
+                message = result ? "Message sent successfully!" : "Failed to send message. Check Bot Token." 
             });
         }
         catch (Exception ex)
