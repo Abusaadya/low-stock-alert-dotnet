@@ -39,9 +39,9 @@ public class Merchant
     [Column("notify_webhook")]
     public bool NotifyWebhook { get; set; } = false;
 
-    [Column("updated_at")]
+    [Column("updatedAt")]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
-    [Column("created_at")]
+    [Column("createdAt")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
