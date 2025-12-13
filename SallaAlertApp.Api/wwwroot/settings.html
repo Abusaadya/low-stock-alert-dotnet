@@ -104,62 +104,62 @@
         </div>
 
         <!-- Placeholder for messages -->
-        <div id="message"></div>
+        <div class="header">
+            <h1>📅 منبه المخزون</h1>
+            <p>تحكم في تنبيهات انخفاض الكمية بسهولة</p>
+        </div>
 
         <form id="settingsForm">
-            <input type="hidden" id="merchantId" value=""> <!-- Populated via JS/Backend -->
-            <input type="hidden" id="telegramChatId" value=""> <!-- Stores current Chat ID -->
+            <input type="hidden" id="merchantId" value="">
+            <input type="hidden" id="telegramChatId" value="">
 
             <div class="form-group">
-                <label>Threshold (Notify when quantity <= X)</label>
-                        <input type="number" id="threshold" value="5" required>
+                <label>الحد الأدنى للتنبيه</label>
+                <input type="number" id="threshold" min="1" placeholder="مثلاً: 5" required>
+                <small style="color: grey; display: block; margin-top: 5px;">سيصلك تنبيه عندما تصل كمية المنتج لهذا
+                    الرقم أو أقل.</small>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
+            <!-- Telegram Section -->
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" id="email" placeholder="merchant@store.com" required>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="notifyEmail" checked>
-                    <label style="margin:0; font-weight:normal">Enable Email Alerts</label>
+                <label>تنبيهات تليجرام</label>
+                <div id="telegramStatus" style="margin-bottom: 10px; color: #666; font-size: 14px;">جاري التحميل...
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Telegram Alerts</label>
-                <div id="telegramStatus" style="margin-bottom: 10px; color: #666;">LOADING...</div>
-
-                <div id="telegramConnect">
-                    <p>To receive alerts, you must connect your Telegram account.</p>
-                    <a id="telegramLink" href="#" target="_blank" class="button"
-                        style="background-color: #0088cc; text-decoration: none; padding: 10px 20px; color: white; border-radius: 5px; display: inline-block;">
-                        Connect Telegram ✈️
+                <div id="telegramConnect" class="telegram-box">
+                    <p style="margin: 0 0 10px 0;">لضمان وصول التنبيهات، قم بربط حساب تليجرام.</p>
+                    <a id="telegramLink" href="#" target="_blank" class="button telegram-btn">
+                        ربط تليجرام ✈️
                     </a>
-                    <p><small>Click the button above and press <strong>Start</strong> in the Telegram app.</small></p>
                 </div>
 
-                <div id="telegramConnected" style="display:none;">
-                    <p style="color: green; font-weight: bold;">✅ You are connected to Telegram!</p>
+                <div id="telegramConnected" style="display:none; text-align: center;">
+                    <p style="color: #2e7d32; font-weight: bold; margin-bottom: 10px;">✅ حسابك مرتبط بنجاح</p>
                     <button type="button" id="disconnectBtn"
-                        style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Disconnect
-                        (Reset)</button>
+                        style="background: #ef5350; width: auto; font-size: 14px; padding: 8px 15px;">إلغاء
+                        الربط</button>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Webhook URL (Automation)</label>
-                <input type="url" id="webhook" placeholder="https://hook.eu1.make.com/...">
+                <label>تنبيهات البريد الإلكتروني (اختياري)</label>
+                <input type="email" id="email" placeholder="email@example.com">
                 <div class="checkbox-group">
-                    <input type="checkbox" id="notifyWebhook">
-                    <label style="margin:0; font-weight:normal">Enable Webhook</label>
+                    <input type="checkbox" id="notifyEmail">
+                    <label for="notifyEmail" style="margin:0; font-weight: normal;">تفعيل تنبيهات الإيميل</label>
                 </div>
             </div>
 
-            <button type="submit">Save Settings</button>
-            <div id="message" style="margin-top: 20px;"></div>
+            <button type="submit">حفظ الإعدادات</button>
         </form>
-        <div class="footer">Low Stock Alert App v2.0</div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="footer-links">
+            <a href="privacy.html" target="_blank">سياسة الخصوصية</a>
+            |
+            <a href="terms.html" target="_blank">شروط الاستخدام</a>
+        </div>
     </div>
 
     <script>

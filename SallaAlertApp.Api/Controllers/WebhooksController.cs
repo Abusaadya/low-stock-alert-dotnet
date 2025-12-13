@@ -47,6 +47,10 @@ public class WebhooksController : BaseController
                 // Logic: Check Threshold
                 await ProcessProductUpdate(merchantId, data);
             }
+            else if (eventName == "app.uninstalled")
+            {
+                await HandleAppUninstall(merchantId);
+            }
 
             return Ok("Webhook Received");
         }
