@@ -52,7 +52,7 @@ public class WebhooksController : BaseController
         if (merchant == null) return;
 
         var quantity = data.GetProperty("quantity").GetInt32();
-        var name = data.TryGetProperty("name", out var n) ? n.GetString() : "Unknown Product";
+        var name = data.TryGetProperty("name", out var n) ? n.GetString() ?? "Unknown Product" : "Unknown Product";
         
         // Check Threshold
         if (quantity <= merchant.AlertThreshold)
