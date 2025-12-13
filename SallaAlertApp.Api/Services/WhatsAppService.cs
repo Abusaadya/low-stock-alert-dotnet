@@ -23,11 +23,31 @@ public class WhatsAppService
     {
         try
         {
+            // Clean the number: remove spaces, dashes, parentheses
+            toNumber = toNumber.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+            
+            // Ensure it starts with +
+            if (!toNumber.StartsWith("+"))
+            {
+                // If it starts with a country code without +, add it
+                if (toNumber.StartsWith("00"))
+                {
+                    toNumber = "+" + toNumber.Substring(2);
+                }
+                else if (!toNumber.StartsWith("whatsapp:"))
+                {
+                    // Assume it's missing the + sign
+                    toNumber = "+" + toNumber;
+                }
+            }
+            
             // Ensure number has whatsapp: prefix
             if (!toNumber.StartsWith("whatsapp:"))
             {
                 toNumber = $"whatsapp:{toNumber}";
             }
+
+            Console.WriteLine($"[WhatsApp] Sending to: {toNumber}");
 
             var message = await MessageResource.CreateAsync(
                 body: messageBody,
