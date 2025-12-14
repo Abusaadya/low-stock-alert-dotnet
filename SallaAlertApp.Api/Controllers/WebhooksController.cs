@@ -145,4 +145,20 @@ public class WebhooksController : BaseController
             Console.WriteLine($"[Automation] Failed to send webhook: {ex.Message}");
         }
     }
+
+    private async Task HandleAppUninstall(long merchantId)
+    {
+        var merchant = await _context.Merchants.FindAsync(merchantId);
+        if (merchant == null)
+        {
+            _logger.LogWarning("[Uninstall] Merchant {Id} not found.", merchantId);
+            return;
+        }
+
+        // Option: Delete completely (Best for privacy)
+        _context.Merchants.Remove(merchant);
+        
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("[Uninstall] Merchant {Id} data deleted.", merchantId);
+    }
 }
