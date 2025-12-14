@@ -183,25 +183,23 @@
                     document.getElementById('webhook').value = data.customWebhookUrl || '';
                     document.getElementById('notifyWebhook').checked = data.notifyWebhook;
 
-                    updateTelegramUI(data.merchantId, data.telegramChatId);
+                    updateTelegramUI(data.merchantId, data.telegramChatId, data.botUsername);
                 }
             } catch (err) {
                 console.error(err);
             }
         }
 
-        function updateTelegramUI(merchantId, telegramChatId) {
+        function updateTelegramUI(merchantId, telegramChatId, botUsername) {
             const statusDiv = document.getElementById('telegramStatus');
             const connectDiv = document.getElementById('telegramConnect');
             const connectedDiv = document.getElementById('telegramConnected');
             const linkBtn = document.getElementById('telegramLink');
 
-            // --- Telegram Bot Username ---
-            // Replace this with your ACTUAL Bot Username (without @)
-            const botUsername = "SallaStockAlertBot";
-            // -----------------------------
+            // Use the bot username from API, fallback to a placeholder if missing
+            const finalBotName = botUsername || "SallaStockAlertBot";
 
-            linkBtn.href = `https://t.me/${botUsername}?start=${merchantId}`;
+            linkBtn.href = `https://t.me/${finalBotName}?start=${merchantId}`;
 
             if (telegramChatId) {
                 const ids = telegramChatId.split(',').filter(id => id.trim().length > 0);
@@ -212,7 +210,6 @@
                     connectDiv.style.display = 'none';
                     connectedDiv.style.display = 'block';
                     document.querySelector('#telegramConnected p').innerText = `✅ مرتبط بـ ${count} حساب(ات) تليجرام`;
-                    // Ensure the hidden input is updated so it's not lost on save
                     document.getElementById('telegramChatId').value = telegramChatId;
                 } else {
                     showConnect();
@@ -222,7 +219,7 @@
             }
 
             function showConnect() {
-                statusDiv.innerText = ""; // Clear "Loading..."
+                statusDiv.innerText = "";
                 connectDiv.style.display = 'block';
                 connectedDiv.style.display = 'none';
                 document.getElementById('telegramChatId').value = "";

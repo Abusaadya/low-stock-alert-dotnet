@@ -9,10 +9,12 @@ namespace SallaAlertApp.Api.Controllers;
 public class SettingsController : BaseController
 {
     private readonly ApplicationDbContext _context;
+    private readonly Services.TelegramService _telegram;
 
-    public SettingsController(ApplicationDbContext context)
+    public SettingsController(ApplicationDbContext context, Services.TelegramService telegram)
     {
         _context = context;
+        _telegram = telegram;
     }
 
     [HttpGet("current")]
@@ -25,6 +27,8 @@ public class SettingsController : BaseController
 
         if (merchant == null) return NotFound("No merchant found");
 
+        var botUsername = await _telegram.GetBotUsernameAsync();
+
         return Ok(new
         {
             merchant.MerchantId,
@@ -33,7 +37,8 @@ public class SettingsController : BaseController
             merchant.NotifyEmail,
             merchant.CustomWebhookUrl,
             merchant.TelegramChatId, // To check if connected
-            merchant.NotifyWebhook
+            merchant.NotifyWebhook,
+            BotUsername = botUsername ?? "SallaStockAlertBot" // Fallback if fetch fails
         });
     }
 

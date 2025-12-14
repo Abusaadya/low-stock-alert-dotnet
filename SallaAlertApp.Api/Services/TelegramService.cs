@@ -51,4 +51,30 @@ public class TelegramService
         var url = $"{BaseUrl}{_botToken}/setWebhook?url={webhookUrl}";
         await _http.GetAsync(url);
     }
+
+    public async Task<string?> GetBotUsernameAsync()
+    {
+        var url = $"{BaseUrl}{_botToken}/getMe";
+        try
+        {
+            var response = await _http.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("result", out var result))
+                {
+                    if (result.TryGetProperty("username", out var username))
+                    {
+                        return username.GetString();
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Telegram] Error fetching bot info: {ex.Message}");
+        }
+        return null;
+    }
 }
