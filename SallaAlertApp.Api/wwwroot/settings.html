@@ -245,7 +245,6 @@
         }
 
         document.getElementById('disconnectBtn').addEventListener('click', async () => {
-            // Logic to clear telegram ID (simple POST)
             const mid = document.getElementById('merchantId').value;
             try {
                 const res = await fetch('/settings/telegram/disconnect', {
@@ -254,14 +253,14 @@
                     body: JSON.stringify({ merchantId: mid })
                 });
                 if (res.ok) {
-                    document.getElementById('message').innerHTML = '<p class="success">Telegram Disconnected. ✅</p>';
-                    document.getElementById('telegramChatId').value = ''; // Clear hidden field
-                    updateTelegramUI(mid, null); // Update UI to disconnected state
+                    document.getElementById('statusMessage').innerHTML = '<p class="success">Telegram Disconnected. ✅</p>';
+                    document.getElementById('telegramChatId').value = '';
+                    updateTelegramUI(mid, null, null);
                 } else {
-                    alert('Error disconnecting Telegram');
+                    document.getElementById('statusMessage').innerHTML = '<p style="color:red;">Error disconnecting Telegram</p>';
                 }
             } catch (err) {
-                alert('Network error during disconnect');
+                document.getElementById('statusMessage').innerHTML = `<p style="color:red;">Network error: ${err.message}</p>`;
             }
         });
 
@@ -269,12 +268,19 @@
 
         document.getElementById('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const midStr = document.getElementById('merchantId').value;
+            // Validate Merchant ID
+            if (!midStr) {
+                document.getElementById('statusMessage').innerHTML = '<p style="color:red;">خطأ: رقم التاجر غير موجود. أعد تحميل الصفحة.</p>';
+                return;
+            }
+
             const data = {
-                MerchantId: parseInt(document.getElementById('merchantId').value),
+                MerchantId: parseInt(midStr),
                 AlertThreshold: parseInt(document.getElementById('threshold').value),
                 AlertEmail: document.getElementById('email').value,
                 CustomWebhookUrl: document.getElementById('webhook').value,
-                TelegramChatId: document.getElementById('telegramChatId').value || null, // Preserve existing or send null if not connected
+                TelegramChatId: document.getElementById('telegramChatId').value || null,
                 NotifyEmail: document.getElementById('notifyEmail').checked,
                 NotifyWebhook: document.getElementById('notifyWebhook').checked
             };
@@ -286,12 +292,12 @@
                     body: JSON.stringify(data)
                 });
                 if (res.ok) {
-                    document.getElementById('message').innerHTML = '<p class="success">Settings Saved Successfully! ✅</p>';
+                    document.getElementById('statusMessage').innerHTML = '<p class="success">تم حفظ الإعدادات بنجاح! ✅</p>';
                 } else {
-                    alert('Error saving settings');
+                    document.getElementById('statusMessage').innerHTML = '<p style="color:red;">خطأ في حفظ الإعدادات</p>';
                 }
             } catch (err) {
-                alert('Network error');
+                document.getElementById('statusMessage').innerHTML = `<p style="color:red;">خطأ في الاتصال: ${err.message}</p>`;
             }
         });
     </script>
