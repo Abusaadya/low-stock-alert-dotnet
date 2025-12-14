@@ -12,8 +12,8 @@ using SallaAlertApp.Api.Data;
 namespace SallaAlertApp.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251214221527_FixModelSync")]
-    partial class FixModelSync
+    [Migration("20251214223150_UpdateSchema")]
+    partial class UpdateSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
