@@ -39,9 +39,21 @@ public class TelegramController : BaseController
                         var merchant = await _context.Merchants.FirstOrDefaultAsync(m => m.MerchantId == merchantId);
                         if (merchant != null)
                         {
-                            merchant.TelegramChatId = chatId;
-                            await _context.SaveChangesAsync();
-                            await _telegram.SendMessageAsync(chatId, $"✅ تم ربط حسابك بنجاح! ستتلقى التنبيهات هنا.\nMerchant ID: {merchantId}");
+                            var existingIds = string.IsNullOrEmpty(merchant.TelegramChatId) 
+                                ? new List<string>() 
+                                : merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                            if (!existingIds.Contains(chatId))
+                            {
+                                existingIds.Add(chatId);
+                                merchant.TelegramChatId = string.Join(",", existingIds);
+                                await _context.SaveChangesAsync();
+                                await _telegram.SendMessageAsync(chatId, $"✅ تم ربط حسابك بنجاح! ستتلقى التنبيهات هنا.\n(الحسابات المتصلة: {existingIds.Count})");
+                            }
+                            else
+                            {
+                                await _telegram.SendMessageAsync(chatId, "ℹ️ هذا الحساب مرتبط بالفعل.");
+                            }
                         }
                         else
                         {

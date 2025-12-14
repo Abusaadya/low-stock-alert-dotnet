@@ -100,14 +100,19 @@ public class WebhooksController : BaseController
             // 2. Telegram
             if (!string.IsNullOrEmpty(merchant.TelegramChatId)) 
             {
-                _logger.LogInformation("[Telegram] Attempting to send to: {ChatId}", merchant.TelegramChatId);
-                var message = $"⚠️ *تنبيه مخزون منخفض*\n\n" +
-                             $"المنتج: *{name}*\n" +
-                             $"الكمية الحالية: {quantity}\n" +
-                             $"الحد الأدنى: {merchant.AlertThreshold}\n\n" +
-                             $"يرجى إعادة التخزين قريباً!";
-                
-                await _telegram.SendMessageAsync(merchant.TelegramChatId, message);
+                var chatIds = merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                _logger.LogInformation("[Telegram] Sending to {Count} accounts", chatIds.Length);
+
+                foreach (var chatId in chatIds)
+                {
+                    var message = $"⚠️ *تنبيه مخزون منخفض*\n\n" +
+                                 $"المنتج: *{name}*\n" +
+                                 $"الكمية الحالية: {quantity}\n" +
+                                 $"الحد الأدنى: {merchant.AlertThreshold}\n\n" +
+                                 $"يرجى إعادة التخزين قريباً!";
+                    
+                    await _telegram.SendMessageAsync(chatId.Trim(), message);
+                }
             }
 
             // 3. Automation (Make.com / Telegram)

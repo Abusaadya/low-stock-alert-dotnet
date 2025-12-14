@@ -176,19 +176,6 @@
                     document.getElementById('notifyEmail').checked = data.notifyEmail;
                     document.getElementById('webhook').value = data.customWebhookUrl || '';
                     document.getElementById('notifyWebhook').checked = data.notifyWebhook;
-                    document.getElementById('telegramChatId').value = data.telegramChatId || ''; // Store for submission
-
-                    // Telegram Logic
-                    const botUsername = "SallaStockAlertBot"; // REPLACE WITH YOUR BOT USERNAME IF DIFFERENT, OR FETCH FROM API
-                    /* Note: Since we don't have the bot username in the API response yet, 
-                       we will rely on hardcoding it or passing it. 
-                       Ideally the API should return it. 
-                       For now, I will assume a generic placeholder or ask user to update it.
-                       Actually, I'll use the one I asked the user to create 'SallaStockAlertBot' but they might have chosen another.
-                       It's safer to just provide the link to the bot ID? No, username is needed for link.
-                       Let's assume the user sends the username or we make a best guess.
-                       Actually, I can just use the provided token to 'getMe' to find the username.
-                       But for now, I'll update the link dynamically.*/
 
                     updateTelegramUI(data.merchantId, data.telegramChatId);
                 }
@@ -203,34 +190,36 @@
             const connectedDiv = document.getElementById('telegramConnected');
             const linkBtn = document.getElementById('telegramLink');
 
-            // Hardcoded bot username for now - IDEALLY should come from backend config
-            // The user's bot token was for a bot. I entered it.
-            // I should probably fetch the bot info in the backend and return the username.
-            // But to save roundtrips, I will use a placeholder or ask user to fill it.
-            // BETTER: Use a backend endpoint to get the bot link.
+            // --- Telegram Bot Username ---
+            // Replace this with your ACTUAL Bot Username (without @)
+            const botUsername = "SallaStockAlertBot";
+            // -----------------------------
 
-            // For this iteration, I'll assume the merchant needs to search for the bot if I don't know the name.
-            // BUT wait, deep linking requires the username. t.me/USERNAME?start=...
+            linkBtn.href = `https://t.me/${botUsername}?start=${merchantId}`;
 
             if (telegramChatId) {
-                statusDiv.innerText = "Status: Connected";
-                connectDiv.style.display = 'none';
-                connectedDiv.style.display = 'block';
+                const ids = telegramChatId.split(',').filter(id => id.trim().length > 0);
+                const count = ids.length;
+
+                if (count > 0) {
+                    statusDiv.innerText = "";
+                    connectDiv.style.display = 'none';
+                    connectedDiv.style.display = 'block';
+                    document.querySelector('#telegramConnected p').innerText = `✅ مرتبط بـ ${count} حساب(ات) تليجرام`;
+                    // Ensure the hidden input is updated so it's not lost on save
+                    document.getElementById('telegramChatId').value = telegramChatId;
+                } else {
+                    showConnect();
+                }
             } else {
-                statusDiv.innerText = "Status: Not Connected";
+                showConnect();
+            }
+
+            function showConnect() {
+                statusDiv.innerText = ""; // Clear "Loading..."
                 connectDiv.style.display = 'block';
                 connectedDiv.style.display = 'none';
-
-                // We need the bot username. I will add a TODO or just omit the username and ask user to search.
-                // Or better, I'll add an endpoint to get the bot link.
-                // TEMPORARY: I will use a generic link structure that likely needs update.
-                // Actually, I can use the 'getMe' endpoint in backend to cache it.
-                // For now, I'll create a link to a placeholder and ask the user to update the HTML or I'll implement a 'GetBotInfo' endpoint. 
-                // For now, let's assume the bot username is known or fetched.
-                // The deep link should be t.me/<bot_username>?start=<merchantId>
-                // For this example, I'll use a placeholder bot username.
-                const botUsername = "SallaStockAlertBot"; // This should ideally come from the backend
-                linkBtn.href = `https://t.me/${botUsername}?start=${merchantId}`;
+                document.getElementById('telegramChatId').value = "";
             }
         }
 
