@@ -157,7 +157,7 @@
             </div>
 
             <div class="form-group">
-                <label>رابط الويب هوك (Webhook) - (لالمطورين)</label>
+                <label>رابط الويب هوك (Webhook) - (للمطورين)</label>
                 <input type="text" id="webhook" placeholder="https://your-server.com/hook">
                 <div class="checkbox-group">
                     <input type="checkbox" id="notifyWebhook">
@@ -170,7 +170,7 @@
 
         <div id="statusMessage" class="status-message"></div>
 
-        <div class="footer-links">
+        <div class="footer-links text-center">
             <a href="/privacy" target="_blank">سياسة الخصوصية</a>
             |
             <a href="/terms" target="_blank">شروط الاستخدام</a>
@@ -234,7 +234,18 @@
 
                 if (count > 0) {
                     statusDiv.innerText = "";
-                    connectDiv.style.display = 'none';
+                    // Show both connected status AND the link allows adding more
+                    connectDiv.style.display = 'block';
+                    document.querySelector('#telegramConnect p').innerText = "لإضافة حساب آخر، شارك الرابط التالي:";
+                    document.getElementById('telegramLink').innerText = "🔗 نسخ رابط الربط";
+                    // Change link behavior to copy to clipboard instead of opening
+                    document.getElementById('telegramLink').onclick = (e) => {
+                        e.preventDefault();
+                        navigator.clipboard.writeText(linkBtn.href).then(() => {
+                            alert("تم نسخ الرابط! أرسله للموظف ليربط حسابه.");
+                        });
+                    };
+
                     connectedDiv.style.display = 'block';
                     document.querySelector('#telegramConnected p').innerText = `✅ مرتبط بـ ${count} حساب(ات) تليجرام`;
                     document.getElementById('telegramChatId').value = telegramChatId;
@@ -248,6 +259,10 @@
             function showConnect() {
                 statusDiv.innerText = "";
                 connectDiv.style.display = 'block';
+                document.querySelector('#telegramConnect p').innerText = "لضمان وصول التنبيهات، قم بربط حساب تليجرام.";
+                document.getElementById('telegramLink').innerText = "ربط تليجرام ✈️";
+                document.getElementById('telegramLink').onclick = null; // Reset click handler
+
                 connectedDiv.style.display = 'none';
                 document.getElementById('telegramChatId').value = "";
             }
