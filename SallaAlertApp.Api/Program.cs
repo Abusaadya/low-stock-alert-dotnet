@@ -141,5 +141,8 @@ app.MapGet("/terms", () => Results.Content(@"<!DOCTYPE html>
 </body>
 </html>", "text/html"));
 
+// Redirect .html versions to clean URLs
+app.MapGet("/privacy.html", () => Results.Redirect("/privacy"));
+app.MapGet("/terms.html", () => Results.Redirect("/terms"));
 
 app.Run();
