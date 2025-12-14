@@ -60,7 +60,8 @@
             margin-right: 10px;
         }
 
-        button {
+        button,
+        .button {
             background: #00b9ff;
             color: white;
             border: none;
@@ -70,9 +71,16 @@
             font-size: 16px;
             cursor: pointer;
             transition: background 0.3s;
+            text-decoration: none;
+            /* For anchor tags */
+            display: inline-block;
+            /* For anchor tags */
+            text-align: center;
+            box-sizing: border-box;
         }
 
-        button:hover {
+        button:hover,
+        .button:hover {
             background: #0099d6;
         }
 
