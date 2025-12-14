@@ -90,6 +90,40 @@ public class WebhooksController : BaseController
             return;
         }
 
+        // Check subscription status
+        var subscription = await _context.Subscriptions.FirstOrDefaultAsync(s => s.MerchantId == merchantId);
+        if (subscription == null || subscription.Status == SubscriptionStatus.Expired || subscription.Status == SubscriptionStatus.Cancelled)
+        {
+            _logger.LogWarning("[Alert] Merchant {Id} has no active subscription. Skipping alert.", merchantId);
+            return;
+        }
+
+        // Check if trial expired
+        if (subscription.Status == SubscriptionStatus.Trial && subscription.TrialEndsAt < DateTime.UtcNow)
+        {
+            subscription.Status = SubscriptionStatus.Expired;
+            await _context.SaveChangesAsync();
+            _logger.LogWarning("[Alert] Merchant {Id} trial expired. Skipping alert.", merchantId);
+            return;
+        }
+
+        // Check alert quota
+        if (subscription.PlanType == PlanType.Free)
+        {
+            if (subscription.LastResetDate.Month != DateTime.UtcNow.Month)
+            {
+                subscription.AlertsSentThisMonth = 0;
+                subscription.LastResetDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+
+            if (subscription.AlertsSentThisMonth >= subscription.MaxAlertsPerMonth)
+            {
+                _logger.LogWarning("[Alert] Merchant {Id} exceeded quota. Skipping alert.", merchantId);
+                return;
+            }
+        }
+
         // Log the full data payload to see what Salla sends
         _logger.LogInformation("[Debug] Full product data: {Data}", data.ToString());
         
