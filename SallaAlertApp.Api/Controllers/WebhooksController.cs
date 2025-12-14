@@ -51,6 +51,14 @@ public class WebhooksController : BaseController
             {
                 await HandleAppUninstall(merchantId);
             }
+            else if (eventName == "subscription.created" || eventName == "subscription.renewed")
+            {
+                await HandleSubscriptionActivated(merchantId, data);
+            }
+            else if (eventName == "subscription.cancelled")
+            {
+                await HandleSubscriptionCancelled(merchantId);
+            }
 
             return Ok("Webhook Received");
         }
@@ -165,5 +173,52 @@ public class WebhooksController : BaseController
         
         await _context.SaveChangesAsync();
         _logger.LogInformation("[Uninstall] Merchant {Id} data deleted.", merchantId);
+    }
+
+    private async Task HandleSubscriptionActivated(long merchantId, JsonElement data)
+    {
+        var subscription = await _context.Subscriptions
+            .FirstOrDefaultAsync(s => s.MerchantId == merchantId);
+
+        if (subscription == null) return;
+
+        var planType = data.TryGetProperty("plan", out var plan) ? plan.GetString() : null;
+        
+        subscription.Status = SubscriptionStatus.Active;
+        subscription.StartDate = DateTime.UtcNow;
+        
+        if (planType?.Contains("year", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            subscription.PlanType = PlanType.Pro;
+            subscription.EndDate = DateTime.UtcNow.AddYears(1);
+            subscription.MaxTelegramAccounts = int.MaxValue;
+            subscription.MaxAlertsPerMonth = int.MaxValue;
+        }
+        else
+        {
+            subscription.PlanType = PlanType.Basic;
+            subscription.EndDate = DateTime.UtcNow.AddMonths(1);
+            subscription.MaxTelegramAccounts = 1;
+            subscription.MaxAlertsPerMonth = int.MaxValue;
+        }
+
+        subscription.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("[Subscription] Activated for Merchant {MerchantId} - Plan: {Plan}", merchantId, subscription.PlanType);
+    }
+
+    private async Task HandleSubscriptionCancelled(long merchantId)
+    {
+        var subscription = await _context.Subscriptions
+            .FirstOrDefaultAsync(s => s.MerchantId == merchantId);
+
+        if (subscription == null) return;
+
+        subscription.Status = SubscriptionStatus.Cancelled;
+        subscription.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        
+        _logger.LogInformation("[Subscription] Cancelled for Merchant {MerchantId}", merchantId);
     }
 }
