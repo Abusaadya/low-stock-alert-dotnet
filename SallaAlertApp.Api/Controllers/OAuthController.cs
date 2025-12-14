@@ -98,7 +98,7 @@ public class OAuthController : BaseController
             await _context.SaveChangesAsync();
 
             // Redirect to settings page after successful installation
-            return Redirect("/settings");
+            return Redirect($"/settings?merchant={merchantId}");
         }
         catch (Exception ex)
         {
