@@ -204,7 +204,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('statusMessage').innerHTML = '<p style="color:red;">خطأ في الاتصال بالسيرفر.</p>';
+                document.getElementById('statusMessage').innerHTML = `<p style="color:red;">خطأ تقني: ${err.message}</p>`;
             }
         }
 
