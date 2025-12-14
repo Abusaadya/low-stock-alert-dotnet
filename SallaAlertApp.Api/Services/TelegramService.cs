@@ -52,12 +52,8 @@ public class TelegramService
         await _http.GetAsync(url);
     }
 
-    private string? _cachedBotUsername;
-
     public async Task<string?> GetBotUsernameAsync()
     {
-        if (!string.IsNullOrEmpty(_cachedBotUsername)) return _cachedBotUsername;
-
         var url = $"{BaseUrl}{_botToken}/getMe";
         try
         {
@@ -70,8 +66,7 @@ public class TelegramService
                 {
                     if (result.TryGetProperty("username", out var username))
                     {
-                        _cachedBotUsername = username.GetString();
-                        return _cachedBotUsername;
+                        return username.GetString();
                     }
                 }
             }
