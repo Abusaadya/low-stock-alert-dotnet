@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace SallaAlertApp.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("webhooks")]
 public class WebhooksController : BaseController
 {
     public static string? LastPayload { get; private set; }
     public static DateTime? LastPayloadTime { get; private set; }
 
-    [HttpPost]
+    [HttpPost("app-events")]
     public async Task<IActionResult> Index()
     {
         using var reader = new StreamReader(Request.Body);
