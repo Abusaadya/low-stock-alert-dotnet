@@ -11,6 +11,9 @@ builder.Services.AddDbContext<SallaAlertApp.Api.Data.ApplicationDbContext>(optio
 // Add Telegram Service
 builder.Services.AddSingleton<SallaAlertApp.Api.Services.TelegramService>();
 
+// Add Subscription Service
+builder.Services.AddScoped<SallaAlertApp.Api.Services.SubscriptionService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

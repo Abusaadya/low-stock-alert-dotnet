@@ -97,6 +97,30 @@ public class OAuthController : BaseController
 
             await _context.SaveChangesAsync();
 
+            // Create trial subscription for new merchants
+            var existingSubscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(s => s.MerchantId == merchantId);
+            
+            if (existingSubscription == null)
+            {
+                var subscription = new Subscription
+                {
+                    MerchantId = merchantId,
+                    PlanType = PlanType.Free,
+                    Status = SubscriptionStatus.Trial,
+                    StartDate = DateTime.UtcNow,
+                    TrialEndsAt = DateTime.UtcNow.AddDays(7),
+                    MaxTelegramAccounts = 1,
+                    MaxAlertsPerMonth = 50,
+                    AlertsSentThisMonth = 0,
+                    LastResetDate = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Subscriptions.Add(subscription);
+                await _context.SaveChangesAsync();
+            }
+
             // Redirect to settings page after successful installation
             return Redirect($"/settings?merchant={merchantId}");
         }
