@@ -59,13 +59,19 @@ public class WebhooksController : BaseController
             {
                 await HandleSubscriptionCancelled(merchantId);
             }
+            else
+            {
+                // Log unsupported event types
+                _logger.LogWarning("[Webhook] Unsupported event type: {EventName}", eventName);
+                return BadRequest("Unsupported event type");
+            }
 
             return Ok("Webhook Received");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Webhook Error: {Message}", ex.Message);
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, "Internal server error: " + ex.Message);
         }
     }
 
