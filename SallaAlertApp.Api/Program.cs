@@ -25,6 +25,14 @@ app.UseStaticFiles(); // Enable wwwroot
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Serve landing page at root
+app.MapGet("/", async (HttpContext context) => {
+    context.Response.ContentType = "text/html";
+    var path = Path.Combine(app.Environment.WebRootPath, "index.html");
+    await context.Response.SendFileAsync(path);
+});
+
 // Serve settings.html at root/settings
 app.MapGet("/settings", async (HttpContext context) => {
     context.Response.ContentType = "text/html";
