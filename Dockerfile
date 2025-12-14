@@ -17,6 +17,8 @@ RUN dotnet publish "SallaAlertApp.Api.csproj" -c Release -o /app/publish
 
 # Final Stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+RUN apt-get update && apt-get install -y libgssapi-krb5-2
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 
