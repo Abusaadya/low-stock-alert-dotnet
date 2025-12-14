@@ -18,14 +18,16 @@ public class SettingsController : BaseController
     }
 
     [HttpGet("current")]
-    public async Task<IActionResult> GetCurrentSettings()
+    public async Task<IActionResult> GetCurrentSettings([FromQuery] long? merchantId)
     {
-        // Fallback: Use the most recently updated merchant
-        var merchant = await _context.Merchants
-            .OrderByDescending(m => m.UpdatedAt)
-            .FirstOrDefaultAsync();
+        if (merchantId == null || merchantId == 0)
+        {
+            return BadRequest("Merchant ID is required.");
+        }
 
-        if (merchant == null) return NotFound("No merchant found");
+        var merchant = await _context.Merchants.FindAsync(merchantId);
+
+        if (merchant == null) return NotFound("Merchant not found in database.");
 
         var botUsername = await _telegram.GetBotUsernameAsync();
 

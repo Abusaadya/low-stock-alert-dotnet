@@ -171,8 +171,22 @@
     <script>
         // Fetch current settings on load
         async function loadSettings() {
+            // Get Merchant ID from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const merchantId = urlParams.get('merchant');
+
+            // If strictly enforcing identity, we might want to error here if missing.
+            // But for now, we pass what we have. If null, backend returns 400.
+
+            if (!merchantId) {
+                // Initial load might not have it if testing locally without params
+                console.warn("No merchant ID found in URL");
+                document.getElementById('statusMessage').innerHTML = '<p style="color:red;">خطأ: لم يتم التعرف على التاجر. يرجى فتح التطبيق من لوحة تحكم سلة.</p>';
+                return;
+            }
+
             try {
-                const res = await fetch('/settings/current');
+                const res = await fetch(`/settings/current?merchantId=${merchantId}`);
                 if (res.ok) {
                     const data = await res.json();
 
@@ -184,9 +198,13 @@
                     document.getElementById('notifyWebhook').checked = data.notifyWebhook;
 
                     updateTelegramUI(data.merchantId, data.telegramChatId, data.botUsername);
+                } else {
+                    const errText = await res.text();
+                    document.getElementById('statusMessage').innerHTML = `<p style="color:red;">خطأ في تحميل البيانات: ${errText}</p>`;
                 }
             } catch (err) {
                 console.error(err);
+                document.getElementById('statusMessage').innerHTML = '<p style="color:red;">خطأ في الاتصال بالسيرفر.</p>';
             }
         }
 
