@@ -67,6 +67,7 @@ public class OAuthController : BaseController
             _http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
             var userRes = await _http.GetAsync("https://accounts.salla.sa/oauth2/user/info");
             var userContent = await userRes.Content.ReadAsStringAsync();
+            Console.WriteLine($"[OAuth] Salla User Info JSON: {userContent}");
             
             if (!userRes.IsSuccessStatusCode) return BadRequest("Failed to fetch user info");
 
