@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SallaAlertApp.Api.Data;
 using SallaAlertApp.Api.Models;
 using SallaAlertApp.Api.Services;
+using System.Text;
 using System.Text.Json;
 
 namespace SallaAlertApp.Api.Controllers;
