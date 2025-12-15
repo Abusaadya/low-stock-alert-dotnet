@@ -1,10 +1,14 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using SallaAlertApp.Api.Data;
 
 #nullable disable
 
 namespace SallaAlertApp.Api.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(ApplicationDbContext))]
+    [Migration("20251215124000_AddMerchantName")]
     public partial class AddMerchantName : Migration
     {
         /// <inheritdoc />

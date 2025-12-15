@@ -28,6 +28,10 @@ namespace SallaAlertApp.Api.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("merchant_id");
 
+                    b.Property<string>("Name")
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
                     b.Property<string>("AccessToken")
                         .IsRequired()
                         .HasColumnType("text")
