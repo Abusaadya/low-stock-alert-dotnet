@@ -140,6 +140,15 @@
                 <div id="telegramStatus" style="margin-bottom: 10px; color: #666; font-size: 14px;">جاري التحميل...
                 </div>
 
+                <!-- Bot Initialization Button -->
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <button type="button" id="initBotBtn"
+                        style="background: #607d8b; font-size: 13px; padding: 5px 15px; width: auto; border-radius: 20px;">
+                        ⚙️ تفعيل البوت (اضغط مرة واحدة)
+                    </button>
+                    <p id="initMsg" style="font-size: 11px; color: #888; margin-top: 5px;"></p>
+                </div>
+
                 <div id="telegramConnect" class="telegram-box">
                     <p style="margin: 0 0 10px 0;">لضمان وصول التنبيهات، قم بربط حساب تليجرام.</p>
                     <a id="telegramLink" href="#" target="_blank" class="button telegram-btn">
@@ -237,6 +246,31 @@
             const finalBotName = botUsername || "SallaStockAlertBot";
 
             linkBtn.href = `https://t.me/${finalBotName}?start=${merchantId}`;
+
+            // Initialize Bot Button Logic
+            document.getElementById('initBotBtn').onclick = async () => {
+                const btn = document.getElementById('initBotBtn');
+                const msg = document.getElementById('initMsg');
+                btn.disabled = true;
+                btn.innerText = "جاري التفعيل...";
+
+                try {
+                    const res = await fetch('/telegram/setup', { method: 'POST' });
+                    if (res.ok) {
+                        msg.innerText = "✅ تم تفعيل البوت بنجاح! يمكنك الآن الربط.";
+                        msg.style.color = "green";
+                        btn.style.display = "none";
+                    } else {
+                        msg.innerText = "❌ حدث خطأ. حاول مرة أخرى.";
+                        msg.style.color = "red";
+                        btn.disabled = false;
+                        btn.innerText = "⚙️ تفعيل البوت";
+                    }
+                } catch (e) {
+                    msg.innerText = "خطأ في الاتصال.";
+                    btn.disabled = false;
+                }
+            };
 
             if (telegramChatId) {
                 const ids = telegramChatId.split(',').filter(id => id.trim().length > 0);

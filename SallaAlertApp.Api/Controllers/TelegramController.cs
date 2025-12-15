@@ -20,6 +20,17 @@ public class TelegramController : BaseController
         _logger = logger;
     }
 
+    [HttpPost("setup")]
+    public async Task<IActionResult> SetupWebhook()
+    {
+        // Construct the webhook URL dynamically based on the current request
+        var webhookUrl = $"{Request.Scheme}://{Request.Host}/telegram/webhook";
+        Console.WriteLine($"[Telegram] Setting webhook to: {webhookUrl}");
+        
+        await _telegram.SetWebhookAsync(webhookUrl);
+        return Ok(new { message = "Webhook set successfully", url = webhookUrl });
+    }
+
     [HttpPost("webhook")]
     public async Task<IActionResult> Webhook([FromBody] JsonElement update)
     {
