@@ -41,6 +41,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Health check endpoint for monitoring services
+app.MapGet("/health", () => Results.Json(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 // Serve landing page at root
 app.MapGet("/", async (HttpContext context) => {
     context.Response.ContentType = "text/html";
