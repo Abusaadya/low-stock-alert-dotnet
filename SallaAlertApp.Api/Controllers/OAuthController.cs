@@ -29,7 +29,7 @@ public class OAuthController : BaseController
         var authUrl = _config["SALLA_AUTHORIZATION_URL"];
         var state = Guid.NewGuid().ToString("N");
 
-        var url = $"{authUrl}?client_id={clientId}&response_type=code&redirect_uri={redirectUri}&scope=products.read webhooks.read_write offline_access&state={state}";
+        var url = $"{authUrl}?client_id={clientId}&response_type=code&redirect_uri={redirectUri}&scope=products.read webhooks.read_write offline_access&state={state}&prompt=login";
         
         return Redirect(url);
     }
