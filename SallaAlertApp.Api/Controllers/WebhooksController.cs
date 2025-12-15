@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using SallaAlertApp.Api.Data;
 using SallaAlertApp.Api.Models;
 using SallaAlertApp.Api.Services;
