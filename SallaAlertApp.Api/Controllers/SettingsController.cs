@@ -40,8 +40,10 @@ public class SettingsController : BaseController
             merchant.NotifyEmail,
             merchant.CustomWebhookUrl,
             merchant.TelegramChatId, // To check if connected
+            merchant.TelegramChatId, // To check if connected
             merchant.NotifyWebhook,
-            BotUsername = botUsername ?? "SallaStockAlertBot" // Fallback if fetch fails
+            BotUsername = botUsername ?? "SallaStockAlertBot", // Fallback if fetch fails
+            Subscription = await _context.Subscriptions.FirstOrDefaultAsync(s => s.MerchantId == merchant.MerchantId)
         });
     }
 

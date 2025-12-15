@@ -117,8 +117,8 @@ public class SubscriptionService
         switch (newPlan)
         {
             case PlanType.Basic:
-                subscription.MaxTelegramAccounts = 1;
-                subscription.MaxAlertsPerMonth = int.MaxValue; // Unlimited
+                subscription.MaxTelegramAccounts = 2;
+                subscription.MaxAlertsPerMonth = 500;
                 break;
             case PlanType.Pro:
                 subscription.MaxTelegramAccounts = int.MaxValue; // Unlimited

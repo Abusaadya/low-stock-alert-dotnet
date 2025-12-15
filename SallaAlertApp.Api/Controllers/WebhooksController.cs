@@ -4,6 +4,7 @@ using SallaAlertApp.Api.Data;
 using SallaAlertApp.Api.Models;
 using SallaAlertApp.Api.Services;
 using System.Text;
+using SallaAlertApp.Api.Services;
 using System.Text.Json;
 
 namespace SallaAlertApp.Api.Controllers;
@@ -61,6 +62,20 @@ public class WebhooksController : BaseController
             // 4. Send Notification (Telegram)
             if (!string.IsNullOrEmpty(merchant.TelegramChatId))
             {
+                // ENFORCE QUOTA
+                var subService = HttpContext.RequestServices.GetService<SubscriptionService>();
+                if (subService != null)
+                {
+                    bool canSend = await subService.CanSendAlert(merchant.MerchantId);
+                    if (!canSend)
+                    {
+                        Console.WriteLine("[Webhook] Alert quota exceeded for this month.");
+                        return Ok(new { message = "Quota exceeded", merchant_id = payload.Merchant });
+                    }
+                    
+                    await subService.IncrementAlertCount(merchant.MerchantId);
+                }
+
                 Console.WriteLine("[Webhook] Sending Telegram alert...");
                 
                 var productUrl = payload.Data.Urls?.Customer ?? "#";

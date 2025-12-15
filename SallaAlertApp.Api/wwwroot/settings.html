@@ -112,10 +112,29 @@
 
         <div
             style="background: #e0f2f1; padding: 15px; border-radius: 8px; margin-bottom: 25px; border-right: 4px solid #004d40; border-left: none; text-align: center;">
-            <strong>مرحباً! 👋</strong>
-            <p style="margin: 5px 0 0 0; color: #555;">
-                قم بتعبئة الإعدادات أدناه لتفعيل تنبيهات المخزون المنخفض عبر تليجرام.
-            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <strong>حالة الاشتراك</strong>
+                <span id="planBadge"
+                    style="background: #ffab00; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">جاري
+                    التحميل...</span>
+            </div>
+
+            <div style="font-size: 13px; color: #555; text-align: right; margin-bottom: 5px;">
+                <span id="usageText">التنبيهات: 0 / 0</span>
+                <div style="background: #b2dfdb; height: 6px; border-radius: 3px; margin-top: 5px; overflow: hidden;">
+                    <div id="usageBar" style="background: #00796b; height: 100%; width: 0%;"></div>
+                </div>
+            </div>
+            <div style="font-size: 13px; color: #555; text-align: right;">
+                <span id="telegramUsageText">حسابات تليجرام: 0 / 0</span>
+            </div>
+
+            <p id="trialExpiry" style="margin: 10px 0 0 0; color: #d32f2f; font-size: 11px; display:none;"></p>
+
+            <a href="https://salla.sa/site/apps" target="_blank" id="upgradeBtn"
+                style="display:none; margin-top: 15px; background: #2e7d32; color: white; text-decoration: none; padding: 5px 15px; border-radius: 15px; font-size: 12px;">
+                ترقية الباقة ⭐
+            </a>
         </div>
 
         <form id="settingsForm">
@@ -229,6 +248,7 @@
                     document.getElementById('notifyWebhook').checked = data.notifyWebhook;
 
                     updateTelegramUI(data.merchantId, data.telegramChatId, data.botUsername);
+                    updateSubscriptionUI(data.subscription);
                 } else {
                     const errText = await res.text();
                     document.getElementById('statusMessage').innerHTML = `<p style="color:red;">خطأ في تحميل البيانات: ${errText}</p>`;
@@ -312,6 +332,61 @@
 
                 connectedDiv.style.display = 'none';
                 document.getElementById('telegramChatId').value = "";
+            }
+        }
+
+        function updateSubscriptionUI(sub) {
+            if (!sub) return;
+
+            const badge = document.getElementById('planBadge');
+            const usageText = document.getElementById('usageText');
+            const usageBar = document.getElementById('usageBar');
+            const telegramUsageText = document.getElementById('telegramUsageText');
+            const upgradeBtn = document.getElementById('upgradeBtn');
+            const trialExpiry = document.getElementById('trialExpiry');
+
+            // Plan Names
+            const plans = ["نسخة تجريبية ⏳", "باقة أساسية 🥉", "باقة احترافية 🏆"];
+            badge.innerText = plans[sub.planType];
+
+            // Colors
+            if (sub.planType === 0) badge.style.background = "#ffab00"; // Orange
+            if (sub.planType === 1) badge.style.background = "#29b6f6"; // Blue
+            if (sub.planType === 2) badge.style.background = "#ffd700"; // Gold
+
+            // Usage
+            let alertLimit = sub.maxAlertsPerMonth;
+            let currentAlerts = sub.alertsSentThisMonth;
+            if (alertLimit > 100000) alertLimit = "غير محدود";
+
+            usageText.innerText = `التنبيهات: ${currentAlerts} / ${alertLimit}`;
+
+            if (typeof alertLimit === 'number') {
+                const percent = Math.min(100, (currentAlerts / alertLimit) * 100);
+                usageBar.style.width = percent + "%";
+                if (percent > 90) usageBar.style.background = "#d32f2f"; // Red warning
+            } else {
+                usageBar.style.width = "100%"; // Full bar for unlimited
+                usageBar.style.background = "#4caf50";
+            }
+
+            // Telegram Accounts Limit
+            let telegramLimit = sub.maxTelegramAccounts;
+            if (telegramLimit > 100) telegramLimit = "غير محدود";
+
+            // Calculate connected accounts from hidden field or whatever exists
+            const existingIds = document.getElementById('telegramChatId').value;
+            const connectedCount = existingIds ? existingIds.split(',').filter(id => id.trim().length > 0).length : 0;
+
+            telegramUsageText.innerHTML = `حسابات تليجرام: <b>${connectedCount}</b> / ${telegramLimit}`;
+
+            // Trial Expiry
+            if (sub.planType === 0 && sub.trialEndsAt) {
+                const endDate = new Date(sub.trialEndsAt);
+                const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+                trialExpiry.innerText = `تنتهي التجربة خلال ${daysLeft} يوم`;
+                trialExpiry.style.display = 'block';
+                upgradeBtn.style.display = 'inline-block';
             }
         }
 

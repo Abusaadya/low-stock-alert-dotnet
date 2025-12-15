@@ -56,6 +56,18 @@ public class TelegramController : BaseController
                                 ? new List<string>() 
                                 : merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
 
+                            // ENFORCE LIMITS
+                            var subscription = await _context.Subscriptions.FirstOrDefaultAsync(s => s.MerchantId == merchantId);
+                            if (subscription != null)
+                            {
+                                int limit = subscription.MaxTelegramAccounts;
+                                if (existingIds.Count >= limit && !existingIds.Contains(chatId))
+                                {
+                                    await _telegram.SendMessageAsync(chatId, $"⛔ عذراً، لقد وصلت للحد الأقصى المسموح به في باقتك ({limit} حسابات). يرجى ترقية الباقة لإضافة المزيد.");
+                                    return Ok();
+                                }
+                            }
+
                             if (!existingIds.Contains(chatId))
                             {
                                 Console.WriteLine($"[Telegram] Adding new ChatID: {chatId}");
