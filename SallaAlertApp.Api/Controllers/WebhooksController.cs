@@ -71,10 +71,14 @@ public class WebhooksController : BaseController
                 message.AppendLine($"🔻 الحد الأدنى للتنبيه: {merchant.AlertThreshold}");
                 message.AppendLine($"🔗 [عرض المنتج]({productUrl})");
 
-                var success = await _telegramService.SendMessageAsync(merchant.TelegramChatId, message.ToString());
-                Console.WriteLine($"[Webhook] Telegram result: {success}");
+                var chatIds = merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var chatId in chatIds)
+                {
+                    var success = await _telegramService.SendMessageAsync(chatId.Trim(), message.ToString());
+                    Console.WriteLine($"[Webhook] Sending to {chatId.Trim()}: {success}");
+                }
                 
-                return Ok(new { message = "Alert sent", channel = "telegram", success });
+                return Ok(new { message = "Alerts sent", count = chatIds.Length });
             }
             else
             {
