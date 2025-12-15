@@ -72,8 +72,15 @@ public class OAuthController : BaseController
             if (!userRes.IsSuccessStatusCode) return BadRequest("Failed to fetch user info");
 
             var userData = JsonSerializer.Deserialize<JsonElement>(userContent);
-            var merchantId = userData.GetProperty("data").GetProperty("id").GetInt64();
-            var merchantName = userData.GetProperty("data").GetProperty("name").GetString();
+            var merchantId = userData.GetProperty("data").GetProperty("merchant").GetProperty("id").GetInt64();
+            var merchantName = userData.GetProperty("data").GetProperty("merchant").GetProperty("name").GetString();
+
+            // Fallback if name is empty (as seen in logs)
+            if (string.IsNullOrEmpty(merchantName))
+            {
+                var username = userData.GetProperty("data").GetProperty("merchant").GetProperty("username").GetString();
+                merchantName = !string.IsNullOrEmpty(username) ? username : "Store-" + merchantId;
+            }
 
             // 3. Save/Update DB
             var merchant = await _context.Merchants.FindAsync(merchantId);
