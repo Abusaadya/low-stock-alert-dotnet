@@ -34,6 +34,8 @@ public class SettingsController : BaseController
         return Ok(new
         {
             merchant.MerchantId,
+            merchant.MerchantId,
+            merchant.Name,
             merchant.AlertThreshold,
             merchant.AlertEmail,
             merchant.NotifyEmail,

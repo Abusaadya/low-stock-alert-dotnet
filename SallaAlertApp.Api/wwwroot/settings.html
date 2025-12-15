@@ -117,9 +117,11 @@
 
         <form id="settingsForm">
             <div class="form-group" style="text-align: center; margin-bottom: 20px;">
-                <label style="color: #004d40;">رقم التاجر (للمطابقة)</label>
+                <label style="color: #004d40;">المتجر</label>
+                <div style="direction: rtl; margin-bottom: 5px; font-weight: bold; color: #2E7D32; font-size: 20px;"
+                    id="displayName"></div>
                 <input type="text" id="displayMerchantId" readonly
-                    style="text-align: center; background: #eee; font-weight: bold; border: none; font-size: 18px; color: #333;"
+                    style="text-align: center; background: #eee; border: none; font-size: 14px; color: #666;"
                     value="جاري التحميل...">
                 <input type="hidden" id="merchantId" value="">
             </div>
@@ -206,7 +208,8 @@
                     const data = await res.json();
 
                     document.getElementById('merchantId').value = data.merchantId;
-                    document.getElementById('displayMerchantId').value = data.merchantId;
+                    document.getElementById('displayMerchantId').value = '#' + data.merchantId;
+                    document.getElementById('displayName').innerText = data.name || "متجر غير معروف";
                     document.getElementById('threshold').value = data.alertThreshold;
                     document.getElementById('email').value = data.alertEmail || '';
                     document.getElementById('notifyEmail').checked = data.notifyEmail;

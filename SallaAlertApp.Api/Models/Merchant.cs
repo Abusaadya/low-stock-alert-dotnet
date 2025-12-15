@@ -9,6 +9,9 @@ public class Merchant
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("merchant_id")]
     public long MerchantId { get; set; }
+    
+    [Column("name")]
+    public string? Name { get; set; }
 
     [Required]
     [Column("access_token")]

@@ -84,7 +84,8 @@ public class OAuthController : BaseController
                     AccessToken = accessToken!,
                     RefreshToken = refreshToken!,
                     ExpiresIn = expiresIn,
-                    AlertEmail = _config["EMAIL_USER"] // Default
+                    AlertEmail = _config["EMAIL_USER"], // Default
+                    Name = merchantName
                 };
                 _context.Merchants.Add(merchant);
             }
@@ -93,6 +94,7 @@ public class OAuthController : BaseController
                 merchant.AccessToken = accessToken!;
                 merchant.RefreshToken = refreshToken!;
                 merchant.ExpiresIn = expiresIn;
+                merchant.Name = merchantName;
             }
 
             await _context.SaveChangesAsync();
