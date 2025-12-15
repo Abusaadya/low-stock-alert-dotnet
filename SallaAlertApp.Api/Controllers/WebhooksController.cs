@@ -4,7 +4,6 @@ using SallaAlertApp.Api.Data;
 using SallaAlertApp.Api.Models;
 using SallaAlertApp.Api.Services;
 using System.Text;
-using SallaAlertApp.Api.Services;
 using System.Text.Json;
 
 namespace SallaAlertApp.Api.Controllers;
