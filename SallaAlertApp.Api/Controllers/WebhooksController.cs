@@ -31,28 +31,38 @@ public class WebhooksController : BaseController
         LastPayload = JsonSerializer.Serialize(payload);
         LastPayloadTime = DateTime.UtcNow;
 
+        Console.WriteLine($"[Webhook] Received event: {payload.Event}");
+
         // 1. Filter Event
         if (payload.Event != "product.updated")
         {
+            Console.WriteLine("[Webhook] Ignored event type.");
             return Ok(new { message = "Ignored event", event_type = payload.Event });
         }
 
         // 2. Find Merchant
+        Console.WriteLine($"[Webhook] Looking for Merchant ID: {payload.Merchant}");
         var merchant = await _context.Merchants.FirstOrDefaultAsync(m => m.MerchantId == payload.Merchant);
+        
         if (merchant == null)
         {
+            Console.WriteLine("[Webhook] Merchant not found in DB.");
             return Ok(new { message = "Merchant not found", merchant_id = payload.Merchant });
         }
 
         // 3. Check Quantity Logic
-        // Salla sometimes sends quantity as null or inside options (basic check for now)
         int quantity = payload.Data.Quantity ?? 0;
+        Console.WriteLine($"[Webhook] Product: {payload.Data.Name} (SKU: {payload.Data.Sku})");
+        Console.WriteLine($"[Webhook] Quantity: {quantity}, Threshold: {merchant.AlertThreshold}");
+        Console.WriteLine($"[Webhook] TelegramChatId: '{merchant.TelegramChatId}'");
 
         if (quantity <= merchant.AlertThreshold)
         {
             // 4. Send Notification (Telegram)
             if (!string.IsNullOrEmpty(merchant.TelegramChatId))
             {
+                Console.WriteLine("[Webhook] Sending Telegram alert...");
+                
                 var productUrl = payload.Data.Urls?.Customer ?? "#";
                 var message = new StringBuilder();
                 message.AppendLine("⚠️ *تنبيه: مخزون منخفض*");
@@ -61,14 +71,20 @@ public class WebhooksController : BaseController
                 message.AppendLine($"🔻 الحد الأدنى للتنبيه: {merchant.AlertThreshold}");
                 message.AppendLine($"🔗 [عرض المنتج]({productUrl})");
 
-                await _telegramService.SendMessageAsync(merchant.TelegramChatId, message.ToString());
+                var success = await _telegramService.SendMessageAsync(merchant.TelegramChatId, message.ToString());
+                Console.WriteLine($"[Webhook] Telegram result: {success}");
                 
-                return Ok(new { message = "Alert sent", channel = "telegram" });
+                return Ok(new { message = "Alert sent", channel = "telegram", success });
             }
             else
             {
+                Console.WriteLine("[Webhook] No Telegram Chat ID linked for this merchant.");
                 return Ok(new { message = "Low stock but no Telegram linked" });
             }
+        }
+        else 
+        {
+            Console.WriteLine("[Webhook] Quantity is sufficient. No alert needed.");
         }
 
         return Ok(new { message = "Quantity sufficient", current = quantity, threshold = merchant.AlertThreshold });
