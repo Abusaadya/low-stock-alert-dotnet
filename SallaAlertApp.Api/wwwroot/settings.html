@@ -116,7 +116,13 @@
         </div>
 
         <form id="settingsForm">
-            <input type="hidden" id="merchantId" value="">
+            <div class="form-group" style="text-align: center; margin-bottom: 20px;">
+                <label style="color: #004d40;">رقم التاجر (للمطابقة)</label>
+                <input type="text" id="displayMerchantId" readonly
+                    style="text-align: center; background: #eee; font-weight: bold; border: none; font-size: 18px; color: #333;"
+                    value="جاري التحميل...">
+                <input type="hidden" id="merchantId" value="">
+            </div>
             <input type="hidden" id="telegramChatId" value="">
 
             <div class="form-group">
@@ -200,6 +206,7 @@
                     const data = await res.json();
 
                     document.getElementById('merchantId').value = data.merchantId;
+                    document.getElementById('displayMerchantId').value = data.merchantId;
                     document.getElementById('threshold').value = data.alertThreshold;
                     document.getElementById('email').value = data.alertEmail || '';
                     document.getElementById('notifyEmail').checked = data.notifyEmail;
