@@ -32,10 +32,13 @@ public class Subscription
     
     // Usage Tracking
     public int AlertsSentThisMonth { get; set; }
-    public DateTime LastResetDate { get; set; }
+    public DateTime LastResetDate { get; set; } = DateTime.UtcNow;
+
+    public DateTime? LastWeeklyReportSentAt { get; set; }
+    public DateTime? LastMonthlyReportSentAt { get; set; }
     
     // Timestamps
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; }
     
     // Navigation

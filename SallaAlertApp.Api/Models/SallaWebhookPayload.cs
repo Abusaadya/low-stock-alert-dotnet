@@ -34,6 +34,12 @@ public class SallaWebhookData
     [JsonPropertyName("price")]
     public SallaWebhookPrice? Price { get; set; }
     
+    [JsonPropertyName("plan_name")]
+    public string? PlanName { get; set; }
+
+    [JsonPropertyName("end_date")]
+    public DateTime? EndDate { get; set; }
+
     [JsonPropertyName("urls")]
     public SallaWebhookUrls? Urls { get; set; }
 }
