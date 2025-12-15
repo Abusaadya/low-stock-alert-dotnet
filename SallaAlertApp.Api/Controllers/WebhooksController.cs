@@ -34,6 +34,26 @@ public class WebhooksController : BaseController
         Console.WriteLine($"[Webhook] Received event: {payload.Event}");
 
         // 1. Filter Event
+        if (payload.Event == "app.subscription.started" || payload.Event == "app.subscription.renewed")
+        {
+            var merchantId = payload.Merchant;
+            var planName = payload.Data.PlanName ?? "Basic"; // Fallback
+            var endDate = payload.Data.EndDate;
+
+            Console.WriteLine($"[Webhook] Subscription Update: {merchantId} -> {planName}");
+            
+            var subService = HttpContext.RequestServices.GetService<SubscriptionService>();
+            if (subService != null)
+            {
+                PlanType plan = PlanType.Basic;
+                if (planName.Contains("Pro", StringComparison.OrdinalIgnoreCase)) plan = PlanType.Pro;
+                if (planName.Contains("Basic", StringComparison.OrdinalIgnoreCase)) plan = PlanType.Basic;
+                
+                await subService.UpgradePlan(merchantId, plan);
+            }
+            return Ok(new { message = "Subscription updated" });
+        }
+        
         if (payload.Event != "product.updated")
         {
             Console.WriteLine("[Webhook] Ignored event type.");
