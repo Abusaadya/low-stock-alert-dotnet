@@ -23,8 +23,8 @@ public class TelegramController : BaseController
     [HttpPost("setup")]
     public async Task<IActionResult> SetupWebhook()
     {
-        // Construct the webhook URL dynamically based on the current request
-        var webhookUrl = $"{Request.Scheme}://{Request.Host}/telegram/webhook";
+        // Force HTTPS as Telegram requires it. Railway terminates SSL, so Request.Scheme might be http.
+        var webhookUrl = $"https://{Request.Host}/telegram/webhook";
         Console.WriteLine($"[Telegram] Setting webhook to: {webhookUrl}");
         
         await _telegram.SetWebhookAsync(webhookUrl);

@@ -49,7 +49,9 @@ public class TelegramService
     public async Task SetWebhookAsync(string webhookUrl)
     {
         var url = $"{BaseUrl}{_botToken}/setWebhook?url={webhookUrl}";
-        await _http.GetAsync(url);
+        var res = await _http.GetAsync(url);
+        var content = await res.Content.ReadAsStringAsync();
+        Console.WriteLine($"[Telegram] SetWebhook Response: {content}");
     }
 
     public async Task<string?> GetBotUsernameAsync()
