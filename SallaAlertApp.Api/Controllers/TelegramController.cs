@@ -23,6 +23,7 @@ public class TelegramController : BaseController
     [HttpPost("webhook")]
     public async Task<IActionResult> Webhook([FromBody] JsonElement update)
     {
+        Console.WriteLine($"[Telegram] Raw Update: {update}");
         try
         {
             // Simple logic to handle /start <MerchantId>
@@ -36,6 +37,7 @@ public class TelegramController : BaseController
                     var parts = text.Split(' ');
                     if (parts.Length > 1 && long.TryParse(parts[1], out var merchantId))
                     {
+                        Console.WriteLine($"[Telegram] Processing Start Command. MerchantID: {merchantId}, ChatID: {chatId}");
                         var merchant = await _context.Merchants.FirstOrDefaultAsync(m => m.MerchantId == merchantId);
                         if (merchant != null)
                         {
@@ -45,6 +47,7 @@ public class TelegramController : BaseController
 
                             if (!existingIds.Contains(chatId))
                             {
+                                Console.WriteLine($"[Telegram] Adding new ChatID: {chatId}");
                                 existingIds.Add(chatId);
                                 merchant.TelegramChatId = string.Join(",", existingIds);
                                 await _context.SaveChangesAsync();
@@ -52,11 +55,13 @@ public class TelegramController : BaseController
                             }
                             else
                             {
+                                Console.WriteLine($"[Telegram] ChatID {chatId} already exists.");
                                 await _telegram.SendMessageAsync(chatId, "ℹ️ هذا الحساب مرتبط بالفعل.");
                             }
                         }
                         else
                         {
+                            Console.WriteLine($"[Telegram] Merchant {merchantId} not found.");
                             await _telegram.SendMessageAsync(chatId, "❌ لم يتم العثور على المتجر بهذا الرقم. تأكد من الرابط.");
                         }
                     }
