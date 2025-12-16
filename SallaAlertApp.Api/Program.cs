@@ -72,8 +72,29 @@ app.MapGet("/terms", async (HttpContext context) => {
     await context.Response.SendFileAsync(path);
 });
 
+app.MapGet("/contact", async (HttpContext context) => {
+    context.Response.ContentType = "text/html";
+    var path = Path.Combine(app.Environment.WebRootPath, "contact.html");
+    await context.Response.SendFileAsync(path);
+});
+
+app.MapGet("/how-it-works", async (HttpContext context) => {
+    context.Response.ContentType = "text/html";
+    var path = Path.Combine(app.Environment.WebRootPath, "how-it-works.html");
+    await context.Response.SendFileAsync(path);
+});
+
+app.MapGet("/faqs", async (HttpContext context) => {
+    context.Response.ContentType = "text/html";
+    var path = Path.Combine(app.Environment.WebRootPath, "faqs.html");
+    await context.Response.SendFileAsync(path);
+});
+
 // Redirect .html versions to clean URLs
 app.MapGet("/privacy.html", () => Results.Redirect("/privacy"));
 app.MapGet("/terms.html", () => Results.Redirect("/terms"));
+app.MapGet("/contact.html", () => Results.Redirect("/contact"));
+app.MapGet("/how-it-works.html", () => Results.Redirect("/how-it-works"));
+app.MapGet("/faqs.html", () => Results.Redirect("/faqs"));
 
 app.Run();
