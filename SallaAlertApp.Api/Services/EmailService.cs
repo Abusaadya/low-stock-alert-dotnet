@@ -20,10 +20,12 @@ public class EmailService
     {
         try
         {
-            var smtpHost = _configuration["Email:SmtpHost"];
+            var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
             var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? "587");
-            var smtpUser = _configuration["Email:SmtpUser"];
-            var smtpPass = _configuration["Email:SmtpPass"];
+            
+            // Allow environment variables to override or serve as primary
+            var smtpUser = _configuration["EMAIL_USER"] ?? _configuration["Email:SmtpUser"];
+            var smtpPass = _configuration["EMAIL_PASS"] ?? _configuration["Email:SmtpPass"];
             var fromEmail = _configuration["Email:FromEmail"] ?? smtpUser;
 
             if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpUser))
