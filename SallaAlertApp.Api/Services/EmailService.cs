@@ -74,7 +74,8 @@ public class EmailService
         {
             using (var client = new SmtpClient())
             {
-                client.Timeout = 10000;
+                // Removed aggressive timeout (10s) which causes issues on slower cloud connections
+                // client.Timeout defaults to ~100s, which is much safer.
                 
                 var socketOptions = MailKit.Security.SecureSocketOptions.Auto;
                 if (port == 587) socketOptions = MailKit.Security.SecureSocketOptions.StartTls;
