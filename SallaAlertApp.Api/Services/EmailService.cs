@@ -55,32 +55,46 @@ public class EmailService
         var bodyBuilder = new BodyBuilder { HtmlBody = body };
         message.Body = bodyBuilder.ToMessageBody();
 
+        // Try primary port
+        bool success = await TrySendAsync(smtpHost, smtpPort, smtpUser, smtpPass, message);
+        
+        // If failed and was using 587, RETRY with 465 (Auto-fallback)
+        if (!success && smtpPort == 587 && smtpHost.Contains("gmail", StringComparison.OrdinalIgnoreCase))
+        {
+             _logger.LogWarning("Connection to 587 failed. Retrying with port 465 (SSL)...");
+             success = await TrySendAsync(smtpHost, 465, smtpUser, smtpPass, message);
+        }
+
+        return success;
+    }
+
+    private async Task<bool> TrySendAsync(string host, int port, string user, string pass, MimeMessage message)
+    {
         try
         {
             using (var client = new SmtpClient())
             {
-                client.Timeout = 10000; // Match user snippet timeout
-
-                // Determine Security Options
+                client.Timeout = 10000;
+                
                 var socketOptions = MailKit.Security.SecureSocketOptions.Auto;
-                if (smtpPort == 587) socketOptions = MailKit.Security.SecureSocketOptions.StartTls;
-                if (smtpPort == 465) socketOptions = MailKit.Security.SecureSocketOptions.SslOnConnect;
+                if (port == 587) socketOptions = MailKit.Security.SecureSocketOptions.StartTls;
+                if (port == 465) socketOptions = MailKit.Security.SecureSocketOptions.SslOnConnect;
 
-                _logger.LogInformation($"Connecting to {smtpHost}:{smtpPort} with {socketOptions}...");
+                _logger.LogInformation($"Connecting to {host}:{port} with {socketOptions}...");
 
-                await client.ConnectAsync(smtpHost, smtpPort, socketOptions);
-                await client.AuthenticateAsync(smtpUser, smtpPass);
+                await client.ConnectAsync(host, port, socketOptions);
+                await client.AuthenticateAsync(user, pass);
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);
             }
-
-            _logger.LogInformation($"Email sent successfully to {to}");
+            
+            _logger.LogInformation($"Email sent successfully via {host}:{port}");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to send email via {smtpHost}:{smtpPort}. Error: {ex.Message}");
-            return false;
+             _logger.LogError($"Failed to send via {host}:{port}. Error: {ex.Message}");
+             return false;
         }
     }
 }
