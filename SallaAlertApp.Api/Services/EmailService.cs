@@ -35,7 +35,24 @@ public class EmailService
             }
 
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Low Stock Alert", fromEmail));
+            
+            // Handle "Name <email>" format if present in fromEmail
+            if (fromEmail.Contains("<") && fromEmail.Contains(">"))
+            {
+               try 
+               {
+                   message.From.Add(MailboxAddress.Parse(fromEmail)); 
+               }
+               catch 
+               {
+                   // Fallback if parse fails
+                   message.From.Add(new MailboxAddress("Low Stock Alert", smtpUser));
+               }
+            }
+            else
+            {
+                message.From.Add(new MailboxAddress("Low Stock Alert", fromEmail));
+            }
             message.To.Add(new MailboxAddress("", to));
             message.Subject = subject;
 
