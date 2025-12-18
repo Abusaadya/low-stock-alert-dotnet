@@ -36,6 +36,30 @@ public class TestController : BaseController
         }
     }
 
+    [HttpGet("email")]
+    public async Task<IActionResult> TestEmail([FromQuery] string to, [FromServices] EmailService emailService)
+    {
+        if (string.IsNullOrEmpty(to))
+            return BadRequest("Please provide ?to=your@email.com");
+
+        try
+        {
+            var subject = "🧪 Salla Alert App: Email Test";
+            var body = "<h1>It Works! 🎉</h1><p>If you are reading this, your email configuration is correct.</p>";
+            
+            var result = await emailService.SendEmailAsync(to, subject, body);
+            
+            return Ok(new { 
+                success = result, 
+                message = result ? "Email sent successfully!" : "Failed to send email. Check logs for details." 
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message, stackTrace = ex.StackTrace });
+        }
+    }
+
     [HttpGet("settings")]
     public async Task<IActionResult> ViewSettings([FromServices] Data.ApplicationDbContext context)
     {
