@@ -14,14 +14,16 @@ public class WebhooksController : BaseController
 {
     private readonly ApplicationDbContext _context;
     private readonly TelegramService _telegramService;
+    private readonly EmailService _emailService;
 
     public static string? LastPayload { get; private set; }
     public static DateTime? LastPayloadTime { get; private set; }
 
-    public WebhooksController(ApplicationDbContext context, TelegramService telegramService)
+    public WebhooksController(ApplicationDbContext context, TelegramService telegramService, EmailService emailService)
     {
         _context = context;
         _telegramService = telegramService;
+        _emailService = emailService;
     }
 
     [HttpPost("app-events")]
@@ -74,27 +76,26 @@ public class WebhooksController : BaseController
         int quantity = payload.Data.Quantity ?? 0;
         Console.WriteLine($"[Webhook] Product: {payload.Data.Name} (SKU: {payload.Data.Sku})");
         Console.WriteLine($"[Webhook] Quantity: {quantity}, Threshold: {merchant.AlertThreshold}");
-        Console.WriteLine($"[Webhook] TelegramChatId: '{merchant.TelegramChatId}'");
 
         if (quantity <= merchant.AlertThreshold)
         {
+            // ENFORCE QUOTA (Shared between Telegram and Email for simplicity, or we can separate)
+            var subService = HttpContext.RequestServices.GetService<SubscriptionService>();
+            if (subService != null)
+            {
+                bool canSend = await subService.CanSendAlert(merchant.MerchantId);
+                if (!canSend)
+                {
+                    Console.WriteLine("[Webhook] Alert quota exceeded for this month.");
+                    return Ok(new { message = "Quota exceeded", merchant_id = payload.Merchant });
+                }
+                
+                await subService.IncrementAlertCount(merchant.MerchantId);
+            }
+
             // 4. Send Notification (Telegram)
             if (!string.IsNullOrEmpty(merchant.TelegramChatId))
             {
-                // ENFORCE QUOTA
-                var subService = HttpContext.RequestServices.GetService<SubscriptionService>();
-                if (subService != null)
-                {
-                    bool canSend = await subService.CanSendAlert(merchant.MerchantId);
-                    if (!canSend)
-                    {
-                        Console.WriteLine("[Webhook] Alert quota exceeded for this month.");
-                        return Ok(new { message = "Quota exceeded", merchant_id = payload.Merchant });
-                    }
-                    
-                    await subService.IncrementAlertCount(merchant.MerchantId);
-                }
-
                 Console.WriteLine("[Webhook] Sending Telegram alert...");
                 
                 var productUrl = payload.Data.Urls?.Customer ?? "#";
@@ -108,12 +109,28 @@ public class WebhooksController : BaseController
                 var chatIds = merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries);
                 foreach (var chatId in chatIds)
                 {
-                    var success = await _telegramService.SendMessageAsync(chatId.Trim(), message.ToString());
-                    Console.WriteLine($"[Webhook] Sending to {chatId.Trim()}: {success}");
+                    await _telegramService.SendMessageAsync(chatId.Trim(), message.ToString());
                 }
-                
-                return Ok(new { message = "Alerts sent", count = chatIds.Length });
             }
+
+            // 5. Send Notification (Email)
+            if (merchant.NotifyEmail && !string.IsNullOrEmpty(merchant.AlertEmail))
+            {
+                 Console.WriteLine($"[Webhook] Sending Email alert to {merchant.AlertEmail}...");
+                 var subject = $"تنبيه مخزون: {payload.Data.Name}";
+                 var body = $@"
+                    <h2>⚠️ تنبيه: مخزون منخفض</h2>
+                    <p><strong>المنتج:</strong> {payload.Data.Name}</p>
+                    <p><strong>الكمية الحالية:</strong> {quantity}</p>
+                    <p><strong>الحد الأدنى:</strong> {merchant.AlertThreshold}</p>
+                    <p><a href='{payload.Data.Urls?.Customer ?? "#"}'>عرض المنتج</a></p>
+                 ";
+                 
+                 await _emailService.SendEmailAsync(merchant.AlertEmail, subject, body);
+            }
+            
+            return Ok(new { message = "Alerts processed" });
+        }
             else
             {
                 Console.WriteLine("[Webhook] No Telegram Chat ID linked for this merchant.");
