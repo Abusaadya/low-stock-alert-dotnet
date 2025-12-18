@@ -22,9 +22,20 @@ public class EmailService
         {
             var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
             
-            // Gmail usually requires 465 (SSL) in cloud environments like Railway
-            var defaultPort = smtpHost.Contains("gmail", StringComparison.OrdinalIgnoreCase) ? "465" : "587";
-            var smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? defaultPort);
+            // SMART PORT LOGIC:
+            // If Gmail is used, and the port is either not set OR set to the "standard" 587,
+            // we FORCE 465 because standard 587 often times out in cloud environments like Railway.
+            var rawPort = _configuration["Email:SmtpPort"];
+            int smtpPort = 587;
+
+            if (smtpHost.Contains("gmail", StringComparison.OrdinalIgnoreCase) && (string.IsNullOrEmpty(rawPort) || rawPort == "587"))
+            {
+                smtpPort = 465;
+            }
+            else if (!string.IsNullOrEmpty(rawPort))
+            {
+                int.TryParse(rawPort, out smtpPort);
+            }
             
             // Allow environment variables to override or serve as primary
             var smtpUser = _configuration["EMAIL_USER"] ?? _configuration["Email:SmtpUser"];
