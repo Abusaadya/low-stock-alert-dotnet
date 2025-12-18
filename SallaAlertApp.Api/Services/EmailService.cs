@@ -18,23 +18,25 @@ public class EmailService
 
     public async Task<bool> SendEmailAsync(string to, string subject, string body)
     {
+        var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
+        int smtpPort = 587; // Default
+            
         try
         {
-            var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
-            
-            // SMART PORT LOGIC:
-            // If Gmail is used, and the port is either not set OR set to the "standard" 587,
-            // we FORCE 465 because standard 587 often times out in cloud environments like Railway.
+            // SMART PORT LOGIC v2:
+            // 1. Get raw config/env value
             var rawPort = _configuration["Email:SmtpPort"];
-            int smtpPort = 587;
 
-            if (smtpHost.Contains("gmail", StringComparison.OrdinalIgnoreCase) && (string.IsNullOrEmpty(rawPort) || rawPort == "587"))
+            // 2. Parse raw value if exists
+            if (!string.IsNullOrEmpty(rawPort) && int.TryParse(rawPort, out int parsedPort))
+            {
+               smtpPort = parsedPort;
+            }
+
+            // 3. Force 465 for Gmail if it was defaulting to 587 (or explicitly set to 587)
+            if (smtpHost.Contains("gmail", StringComparison.OrdinalIgnoreCase) && smtpPort == 587)
             {
                 smtpPort = 465;
-            }
-            else if (!string.IsNullOrEmpty(rawPort))
-            {
-                int.TryParse(rawPort, out smtpPort);
             }
             
             // Allow environment variables to override or serve as primary
@@ -87,7 +89,8 @@ public class EmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to send email. Host: {_configuration["Email:SmtpHost"] ?? "smtp.gmail.com"}, Port: {_configuration["Email:SmtpPort"] ?? "587"}");
+            // Log actual variables used, NOT re-read from config
+            _logger.LogError(ex, $"Failed to send email. Host: {smtpHost}, Port: {smtpPort}");
             return false;
         }
     }
