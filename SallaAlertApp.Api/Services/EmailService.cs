@@ -60,7 +60,10 @@ public class EmailService
             message.Body = bodyBuilder.ToMessageBody();
 
             using var client = new SmtpClient();
-            await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+            // detailed log
+            _logger.LogInformation($"Connecting to SMTP: {smtpHost}:{smtpPort}");
+
+            await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.Auto);
             await client.AuthenticateAsync(smtpUser, smtpPass);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
@@ -70,7 +73,7 @@ public class EmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send email.");
+            _logger.LogError(ex, $"Failed to send email. Host: {_configuration["Email:SmtpHost"] ?? "smtp.gmail.com"}, Port: {_configuration["Email:SmtpPort"] ?? "587"}");
             return false;
         }
     }
