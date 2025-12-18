@@ -131,12 +131,7 @@ public class WebhooksController : BaseController
             
             return Ok(new { message = "Alerts processed" });
         }
-            else
-            {
-                Console.WriteLine("[Webhook] No Telegram Chat ID linked for this merchant.");
-                return Ok(new { message = "Low stock but no Telegram linked" });
-            }
-        }
+
         else 
         {
             Console.WriteLine("[Webhook] Quantity is sufficient. No alert needed.");
