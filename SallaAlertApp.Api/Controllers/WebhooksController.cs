@@ -117,8 +117,8 @@ public class WebhooksController : BaseController
             if (merchant.NotifyEmail && !string.IsNullOrEmpty(merchant.AlertEmail))
             {
                  Console.WriteLine($"[Webhook] Sending Email alert to {merchant.AlertEmail}...");
-                 var subject = $"تنبيه مخزون: {payload.Data.Name}";
-                 var body = $@"
+                 var emailSubject = $"تنبيه مخزون: {payload.Data.Name}";
+                 var emailBody = $@"
                     <h2>⚠️ تنبيه: مخزون منخفض</h2>
                     <p><strong>المنتج:</strong> {payload.Data.Name}</p>
                     <p><strong>الكمية الحالية:</strong> {quantity}</p>
@@ -126,7 +126,18 @@ public class WebhooksController : BaseController
                     <p><a href='{payload.Data.Urls?.Customer ?? "#"}'>عرض المنتج</a></p>
                  ";
                  
-                 await _emailService.SendEmailAsync(merchant.AlertEmail, subject, body);
+                 // Run in background to avoid blocking webhook response (Salla has 10s timeout)
+                 _ = Task.Run(async () => 
+                 {
+                     try 
+                     {
+                        await _emailService.SendEmailAsync(merchant.AlertEmail, emailSubject, emailBody);
+                     }
+                     catch (Exception ex)
+                     {
+                        Console.WriteLine($"[Background Email Error] {ex.Message}");
+                     }
+                 });
             }
             
             return Ok(new { message = "Alerts processed" });
