@@ -1,3 +1,4 @@
+using System.Net;
 using MailKit.Net.Smtp;
 using MimeKit;
 using Microsoft.Extensions.Configuration;
@@ -72,18 +73,27 @@ public class EmailService
     {
         try
         {
+            // FORCE IPv4: Resolve DNS manually to avoid IPv6 timeouts in cloud environments (Railway/Docker)
+            // MailKit sometimes defaults to IPv6 which might be blocked or unstable.
+            var addresses = await Dns.GetHostAddressesAsync(host);
+            var ipAddress = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+            
+            // If no IPv4 found (unlikely for Gmail), fallback to host string
+            var hostOrIp = ipAddress?.ToString() ?? host;
+            if (ipAddress != null) _logger.LogInformation($"Resolved {host} to IPv4: {ipAddress}");
+
             using (var client = new SmtpClient())
             {
-                // Removed aggressive timeout (10s) which causes issues on slower cloud connections
-                // client.Timeout defaults to ~100s, which is much safer.
-                
+                client.Timeout = 20000; // 20 seconds is reasonable
+                client.CheckCertificateRevocation = false; // Prevent CRL check hangs
+
                 var socketOptions = MailKit.Security.SecureSocketOptions.Auto;
                 if (port == 587) socketOptions = MailKit.Security.SecureSocketOptions.StartTls;
                 if (port == 465) socketOptions = MailKit.Security.SecureSocketOptions.SslOnConnect;
 
-                _logger.LogInformation($"Connecting to {host}:{port} with {socketOptions}...");
+                _logger.LogInformation($"Connecting to {hostOrIp}:{port} with {socketOptions}...");
 
-                await client.ConnectAsync(host, port, socketOptions);
+                await client.ConnectAsync(hostOrIp, port, socketOptions);
                 await client.AuthenticateAsync(user, pass);
                 await client.SendAsync(message);
                 await client.DisconnectAsync(true);

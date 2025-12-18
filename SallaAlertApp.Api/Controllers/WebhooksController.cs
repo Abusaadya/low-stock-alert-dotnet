@@ -93,54 +93,70 @@ public class WebhooksController : BaseController
                 await subService.IncrementAlertCount(merchant.MerchantId);
             }
 
-            // 4. Send Notification (Telegram)
-            if (!string.IsNullOrEmpty(merchant.TelegramChatId))
+            // 4. FIRE AND FORGET: Handle Notifications in Background
+            // "Double Safety" pattern: Each task has its own try-catch so one failure doesn't affect the other.
+            _ = Task.Run(async () =>
             {
-                Console.WriteLine("[Webhook] Sending Telegram alert...");
-                
-                var productUrl = payload.Data.Urls?.Customer ?? "#";
-                var message = new StringBuilder();
-                message.AppendLine("⚠️ *تنبيه: مخزون منخفض*");
-                message.AppendLine($"📦 المنتج: {payload.Data.Name}");
-                message.AppendLine($"🔢 الكمية الحالية: *{quantity}*");
-                message.AppendLine($"🔻 الحد الأدنى للتنبيه: {merchant.AlertThreshold}");
-                message.AppendLine($"🔗 [عرض المنتج]({productUrl})");
-
-                var chatIds = merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                foreach (var chatId in chatIds)
+                // Task A: Telegram (Isolated)
+                var telegramTask = Task.Run(async () =>
                 {
-                    await _telegramService.SendMessageAsync(chatId.Trim(), message.ToString());
-                }
-            }
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(merchant.TelegramChatId))
+                        {
+                            Console.WriteLine("[Background] Sending Telegram alert...");
+                            var productUrl = payload.Data.Urls?.Customer ?? "#";
+                            var message = new StringBuilder();
+                            message.AppendLine("⚠️ *تنبيه: مخزون منخفض*");
+                            message.AppendLine($"📦 المنتج: {payload.Data.Name}");
+                            message.AppendLine($"🔢 الكمية الحالية: *{quantity}*");
+                            message.AppendLine($"🔻 الحد الأدنى للتنبيه: {merchant.AlertThreshold}");
+                            message.AppendLine($"🔗 [عرض المنتج]({productUrl})");
 
-            // 5. Send Notification (Email)
-            if (merchant.NotifyEmail && !string.IsNullOrEmpty(merchant.AlertEmail))
-            {
-                 Console.WriteLine($"[Webhook] Sending Email alert to {merchant.AlertEmail}...");
-                 var emailSubject = $"تنبيه مخزون: {payload.Data.Name}";
-                 var emailBody = $@"
-                    <h2>⚠️ تنبيه: مخزون منخفض</h2>
-                    <p><strong>المنتج:</strong> {payload.Data.Name}</p>
-                    <p><strong>الكمية الحالية:</strong> {quantity}</p>
-                    <p><strong>الحد الأدنى:</strong> {merchant.AlertThreshold}</p>
-                    <p><a href='{payload.Data.Urls?.Customer ?? "#"}'>عرض المنتج</a></p>
-                 ";
-                 
-                 // Run in background to avoid blocking webhook response (Salla has 10s timeout)
-                 _ = Task.Run(async () => 
-                 {
-                     try 
-                     {
-                        await _emailService.SendEmailAsync(merchant.AlertEmail, emailSubject, emailBody);
-                     }
-                     catch (Exception ex)
-                     {
-                        Console.WriteLine($"[Background Email Error] {ex.Message}");
-                     }
-                 });
-            }
+                            var chatIds = merchant.TelegramChatId.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var chatId in chatIds)
+                            {
+                                await _telegramService.SendMessageAsync(chatId.Trim(), message.ToString());
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Telegram Background Error] {ex.Message}");
+                    }
+                });
+
+                // Task B: Email (Isolated)
+                var emailTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        if (merchant.NotifyEmail && !string.IsNullOrEmpty(merchant.AlertEmail))
+                        {
+                            Console.WriteLine($"[Background] Sending Email alert to {merchant.AlertEmail}...");
+                            var emailSubject = $"تنبيه مخزون: {payload.Data.Name}";
+                            var emailBody = $@"
+                                <h2>⚠️ تنبيه: مخزون منخفض</h2>
+                                <p><strong>المنتج:</strong> {payload.Data.Name}</p>
+                                <p><strong>الكمية الحالية:</strong> {quantity}</p>
+                                <p><strong>الحد الأدنى:</strong> {merchant.AlertThreshold}</p>
+                                <p><a href='{payload.Data.Urls?.Customer ?? "#"}'>عرض المنتج</a></p>
+                            ";
+                            
+                            await _emailService.SendEmailAsync(merchant.AlertEmail, emailSubject, emailBody);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Email Background Error] {ex.Message}");
+                    }
+                });
+
+                // Wait for both tasks (just to ensure the thread stays alive long enough if needed, though Fire & Forget handles it)
+                await Task.WhenAll(telegramTask, emailTask);
+            });
             
-            return Ok(new { message = "Alerts processed" });
+            return Ok(new { message = "Alerts processing in background" });
         }
 
         else 
