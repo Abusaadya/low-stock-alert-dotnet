@@ -1,8 +1,6 @@
-using System.Net;
-using MailKit.Net.Smtp;
-using MimeKit;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace SallaAlertApp.Api.Services;
 
@@ -10,94 +8,59 @@ public class EmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
+    private readonly HttpClient _httpClient;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    // بنضيف هنا HttpClient عشان هو اللي هيبعت الطلب لموقع Resend
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger, HttpClient httpClient)
     {
         _configuration = configuration;
         _logger = logger;
+        _httpClient = httpClient;
     }
 
     public async Task<bool> SendEmailAsync(string to, string subject, string body)
     {
-        // 1. Get configs with fallbacks matches the structure of the provided working snippet
-        var smtpHost = _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
-        var rawPort = _configuration["Email:SmtpPort"];
-        int smtpPort = 587; // Default to 587 as per user snippet
-
-        if (!string.IsNullOrEmpty(rawPort) && int.TryParse(rawPort, out int parsedPort))
-        {
-            smtpPort = parsedPort;
-        }
-
-        // Allow environment variables (Priority)
-        var smtpUser = _configuration["EMAIL_USER"] ?? _configuration["Email:SmtpUser"];
-        var smtpPass = _configuration["EMAIL_PASS"] ?? _configuration["Email:SmtpPass"];
-        var fromEmail = _configuration["Email:FromEmail"] ?? smtpUser;
-
-        // Logging for visibility
-        _logger.LogInformation($"Preparing to send email via {smtpHost}:{smtpPort} (User: {smtpUser})");
-
-        var message = new MimeMessage();
-        
-        // Handle From Address
-        if (fromEmail != null && fromEmail.Contains("<"))
-        {
-            try { message.From.Add(MailboxAddress.Parse(fromEmail)); }
-            catch { message.From.Add(new MailboxAddress("Alerts", smtpUser)); }
-        }
-        else
-        {
-            message.From.Add(new MailboxAddress("Alerts", fromEmail ?? smtpUser));
-        }
-
-        message.To.Add(new MailboxAddress("", to));
-        message.Subject = subject;
-
-        var bodyBuilder = new BodyBuilder { HtmlBody = body };
-        message.Body = bodyBuilder.ToMessageBody();
-
-        // Try primary port
-        bool success = await TrySendAsync(smtpHost, smtpPort, smtpUser, smtpPass, message);
-        
-        // If failed and was using 587, RETRY with 465 (Auto-fallback)
-        if (!success && smtpPort == 587 && smtpHost.Contains("gmail", StringComparison.OrdinalIgnoreCase))
-        {
-             _logger.LogWarning("Connection to 587 failed. Retrying with port 465 (SSL)...");
-             success = await TrySendAsync(smtpHost, 465, smtpUser, smtpPass, message);
-        }
-
-        return success;
-    }
-
-    private async Task<bool> TrySendAsync(string host, int port, string user, string pass, MimeMessage message)
-    {
         try
         {
-            using (var client = new SmtpClient())
+            // 1. هات الـ API Key اللي انت خدته من موقع Resend
+            // أنصحك تطلعه في متغيرات Railway وتسميه RESEND_API_KEY
+            var apiKey = _configuration["RESEND_API_KEY"] ?? "re_shS7...ضع_الكود_هنا";
+
+            _logger.LogInformation("🔄 محاولة إرسال إيميل عبر Resend API إلى: {To}", to);
+
+            // 2. تجهيز البيانات اللي هنبعتها لـ Resend
+            var emailData = new
             {
-                // Rely on default timeout (approx 2 mins) for slow cloud connections
-                // client.Timeout = 20000; 
-                client.CheckCertificateRevocation = false;
+                from = "Salla Alerts <onboarding@resend.dev>", // سيب ده زي ما هو دلوقتي للتجربة
+                to = new[] { to },
+                subject = subject,
+                html = body
+            };
 
-                var socketOptions = MailKit.Security.SecureSocketOptions.Auto;
-                if (port == 587) socketOptions = MailKit.Security.SecureSocketOptions.StartTls;
-                if (port == 465) socketOptions = MailKit.Security.SecureSocketOptions.SslOnConnect;
+            // 3. تحويل البيانات لشكل يفهمه الموقع (JSON)
+            var json = JsonSerializer.Serialize(emailData);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                _logger.LogInformation($"Connecting to {host}:{port} with {socketOptions}...");
+            // 4. وضع الـ Key في عنوان الطلب للأمان
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
-                await client.ConnectAsync(host, port, socketOptions);
-                await client.AuthenticateAsync(user, pass);
-                await client.SendAsync(message);
-                await client.DisconnectAsync(true);
+            // 5. إرسال الطلب الفعلي للموقع
+            var response = await _httpClient.PostAsync("https://api.resend.com/emails", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("✅ تم إرسال الإيميل بنجاح واختفى الـ Timeout!");
+                return true;
             }
-            
-            _logger.LogInformation($"Email sent successfully via {host}:{port}");
-            return true;
+
+            var error = await response.Content.ReadAsStringAsync();
+            _logger.LogError("❌ فشل إرسال الإيميل. السبب: {Error}", error);
+            return false;
         }
         catch (Exception ex)
         {
-             _logger.LogError($"Failed to send via {host}:{port}. Error: {ex.Message}");
-             return false;
+            _logger.LogError(ex, "💥 حدث خطأ غير متوقع أثناء الإرسال");
+            return false;
         }
     }
 }
