@@ -13,17 +13,14 @@ namespace SallaAlertApp.Api.Controllers;
 public class WebhooksController : BaseController
 {
     private readonly ApplicationDbContext _context;
-    private readonly TelegramService _telegramService;
-    private readonly EmailService _emailService;
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public static string? LastPayload { get; private set; }
-    public static DateTime? LastPayloadTime { get; private set; }
-
-    public WebhooksController(ApplicationDbContext context, TelegramService telegramService, EmailService emailService)
+    public WebhooksController(ApplicationDbContext context, TelegramService telegramService, EmailService emailService, IHttpClientFactory httpClientFactory)
     {
         _context = context;
         _telegramService = telegramService;
         _emailService = emailService;
+        _httpClientFactory = httpClientFactory;
     }
 
     [HttpPost("app-events")]
@@ -50,6 +47,10 @@ public class WebhooksController : BaseController
                 return BadRequest("No access token provided");
             }
 
+            // Fetch Merchant Email from Salla
+            string? merchantEmail = await GetMerchantEmail(accessToken);
+            Console.WriteLine($"[Webhook] Fetched Merchant Email: {merchantEmail ?? "Not Found"}");
+
             // 1. Save Merchant Info
             var authMerchant = await _context.Merchants.FindAsync(merchantId);
             if (authMerchant == null)
@@ -60,7 +61,8 @@ public class WebhooksController : BaseController
                     AccessToken = accessToken,
                     RefreshToken = refreshToken ?? "",
                     ExpiresIn = expiresIn,
-                    AlertEmail = "", // Will be set by user later
+                    AlertEmail = merchantEmail ?? "", // Use fetched email
+                    NotifyEmail = !string.IsNullOrEmpty(merchantEmail), // Enable email alerts if found
                     Name = $"Store-{merchantId}"
                 };
                 _context.Merchants.Add(authMerchant);
@@ -70,6 +72,13 @@ public class WebhooksController : BaseController
                 authMerchant.AccessToken = accessToken;
                 authMerchant.RefreshToken = refreshToken ?? authMerchant.RefreshToken;
                 authMerchant.ExpiresIn = expiresIn;
+                // Only update email if we found one and it wasn't set or user wants updates? 
+                // Let's only set it if empty to avoid overwriting user preference if they changed it manually later.
+                if (string.IsNullOrEmpty(authMerchant.AlertEmail) && !string.IsNullOrEmpty(merchantEmail))
+                {
+                    authMerchant.AlertEmail = merchantEmail;
+                    authMerchant.NotifyEmail = true;
+                }
             }
             await _context.SaveChangesAsync();
 
@@ -77,8 +86,6 @@ public class WebhooksController : BaseController
             var subService = HttpContext.RequestServices.GetService<SubscriptionService>();
             if (subService != null)
             {
-                // We can't access SubscriptionService easily here without DI scopes or careful usage. 
-                // Better to just use DB Context directly for simplicity in this controller context
                 var existingSub = await _context.Subscriptions.FirstOrDefaultAsync(s => s.MerchantId == merchantId);
                 if (existingSub == null)
                 {
@@ -101,6 +108,35 @@ public class WebhooksController : BaseController
                 }
             }
             
+            // 3. Send Welcome Email with Settings Link
+            if (!string.IsNullOrEmpty(merchantEmail))
+            {
+                _ = Task.Run(async () => 
+                {
+                    try 
+                    {
+                        var settingsLink = $"https://{Request.Host}/settings?merchant={merchantId}";
+                        var subject = "مرحباً بك في منبه المخزون! 🚀";
+                        var body = $@"
+                            <h2>تم تثبيت التطبيق بنجاح!</h2>
+                            <p>أهلاً بك،</p>
+                            <p>تطبيق منبه المخزون جاهز الآن لمساعدتك في متابعة منتجاتك.</p>
+                            <p><strong>لضبط الإعدادات وربط تليجرام، اضغط على الرابط التالي:</strong></p>
+                            <p><a href='{settingsLink}' style='background:#00b9ff; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;'>⚙️ ضبط الإعدادات</a></p>
+                            <p>أو انسخ الرابط: {settingsLink}</p>
+                            <br>
+                            <p>مع تحيات فريق منبه المخزون</p>
+                        ";
+                        await _emailService.SendEmailAsync(merchantEmail, subject, body);
+                        Console.WriteLine($"[Webhook] Welcome email sent to {merchantEmail}");
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine($"[Webhook] Error sending welcome email: {ex.Message}");
+                    }
+                });
+            }
+
             return Ok(new { message = "Authorized successfully" });
         }
 
@@ -234,5 +270,36 @@ public class WebhooksController : BaseController
         }
 
         return Ok(new { message = "Quantity sufficient", current = quantity, threshold = merchant.AlertThreshold });
+    private async Task<string?> GetMerchantEmail(string accessToken)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://accounts.salla.sa/oauth2/user/info");
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await client.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var data))
+                {
+                    if (data.TryGetProperty("email", out var email))
+                    {
+                        return email.GetString();
+                    }
+                }
+            }
+            else 
+            {
+                Console.WriteLine($"[Webhook] Failed to fetch user info. Status: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Webhook] Error fetching merchant email: {ex.Message}");
+        }
+        return null; // Return null if not found
     }
 }
