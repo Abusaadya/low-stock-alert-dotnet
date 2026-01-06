@@ -270,6 +270,8 @@ public class WebhooksController : BaseController
         }
 
         return Ok(new { message = "Quantity sufficient", current = quantity, threshold = merchant.AlertThreshold });
+    }
+
     private async Task<string?> GetMerchantEmail(string accessToken)
     {
         try

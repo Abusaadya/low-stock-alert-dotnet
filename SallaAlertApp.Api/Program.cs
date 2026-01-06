@@ -82,8 +82,9 @@ app.MapGet("/", async (HttpContext context) => {
 
 // Serve settings.html at root/settings
 app.MapGet("/settings", async (HttpContext context) => {
-    // DEBUG: Verify if code is updated
-    await context.Response.WriteAsync("DEBUG: SERVER IS UPDATED. SETTINGS PAGE SHOULD BE HERE.");
+    context.Response.ContentType = "text/html";
+    var path = Path.Combine(app.Environment.WebRootPath, "settings.html");
+    await context.Response.SendFileAsync(path);
 });
 
 
