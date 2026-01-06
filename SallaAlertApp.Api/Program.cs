@@ -30,6 +30,7 @@ if (!string.IsNullOrEmpty(databaseUrl))
         Console.WriteLine($"[Railway Setup] DATABASE_URL found.");
         Console.WriteLine($"[Railway Setup] Host: {uri.Host}, Port: {port}, User: {username}");
         Console.WriteLine($"[Railway Setup] Password Length: {password.Length}"); 
+        Console.WriteLine($"[Deployment] Force Update: Login Screen Fix Applied"); 
     }
     catch (Exception ex)
     {
