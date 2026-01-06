@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Version: 2026-01-06-LoginScreen-Fix -->
 
 <head>
     <meta charset="UTF-8">
@@ -24,7 +25,8 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 100%;
             max-width: 500px;
-            display: none; /* Hidden by default until auth check */
+            display: none;
+            /* Hidden by default until auth check */
         }
 
         .login-container {
@@ -121,7 +123,8 @@
         <p style="color: #666; margin-bottom: 20px;">الرجاء إدخال رقم المتجر (Merchant ID) للدخول لإعداداتك.</p>
         <form id="loginForm">
             <div class="form-group">
-                <input type="text" id="loginMerchantId" placeholder="مثلاً: 12345678" required style="text-align: center; font-size: 18px;">
+                <input type="text" id="loginMerchantId" placeholder="مثلاً: 12345678" required
+                    style="text-align: center; font-size: 18px;">
             </div>
             <button type="submit">تسجيل الدخول</button>
             <div id="loginError" style="color: red; margin-top: 10px; font-size: 14px;"></div>
@@ -172,7 +175,8 @@
                     style="text-align: center; background: #eee; border: none; font-size: 14px; color: #666;"
                     value="جاري التحميل...">
                 <input type="hidden" id="merchantId" value="">
-                <a href="#" id="logoutLink" style="font-size: 12px; color: #d32f2f; display: block; margin-top: 5px;">تسجيل خروج</a>
+                <a href="#" id="logoutLink"
+                    style="font-size: 12px; color: #d32f2f; display: block; margin-top: 5px;">تسجيل خروج</a>
             </div>
             <input type="hidden" id="telegramChatId" value="">
 
@@ -245,7 +249,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-             // Check URL Params first
+            // Check URL Params first
             const urlParams = new URLSearchParams(window.location.search);
             let merchantId = urlParams.get('merchant');
 
@@ -275,7 +279,7 @@
                 if (res.ok) {
                     // Valid ID, save to local storage and show content
                     localStorage.setItem('salla_merchant_id', merchantId);
-                    
+
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('settingsScreen').style.display = 'block';
 
@@ -286,11 +290,11 @@
                 } else {
                     // Invalid ID or error
                     if (res.status === 404) {
-                       document.getElementById('loginError').innerText = "رقم المتجر غير صحيح أو لم يتم تثبيت التطبيق.";
+                        document.getElementById('loginError').innerText = "رقم المتجر غير صحيح أو لم يتم تثبيت التطبيق.";
                     }
-                     // Only show login if this was an initial load (not a direct URL visit that failed)
-                     // If URL visit failed, we might want to stay on login but notify user
-                     showLogin();
+                    // Only show login if this was an initial load (not a direct URL visit that failed)
+                    // If URL visit failed, we might want to stay on login but notify user
+                    showLogin();
                 }
             } catch (err) {
                 console.error(err);
@@ -321,17 +325,17 @@
         });
 
         function populateSettingsUI(data) {
-             document.getElementById('merchantId').value = data.merchantId;
-             document.getElementById('displayMerchantId').value = '#' + data.merchantId;
-             document.getElementById('displayName').innerText = data.name || "متجر غير معروف";
-             document.getElementById('threshold').value = data.alertThreshold;
-             document.getElementById('email').value = data.alertEmail || '';
-             document.getElementById('notifyEmail').checked = data.notifyEmail;
-             document.getElementById('webhook').value = data.customWebhookUrl || '';
-             document.getElementById('notifyWebhook').checked = data.notifyWebhook;
+            document.getElementById('merchantId').value = data.merchantId;
+            document.getElementById('displayMerchantId').value = '#' + data.merchantId;
+            document.getElementById('displayName').innerText = data.name || "متجر غير معروف";
+            document.getElementById('threshold').value = data.alertThreshold;
+            document.getElementById('email').value = data.alertEmail || '';
+            document.getElementById('notifyEmail').checked = data.notifyEmail;
+            document.getElementById('webhook').value = data.customWebhookUrl || '';
+            document.getElementById('notifyWebhook').checked = data.notifyWebhook;
 
-             updateTelegramUI(data.merchantId, data.telegramChatId, data.botUsername);
-             updateSubscriptionUI(data.subscription);
+            updateTelegramUI(data.merchantId, data.telegramChatId, data.botUsername);
+            updateSubscriptionUI(data.subscription);
         }
 
         function updateTelegramUI(merchantId, telegramChatId, botUsername) {
@@ -521,4 +525,5 @@
         });
     </script>
 </body>
+
 </html>
