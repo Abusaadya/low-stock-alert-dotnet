@@ -26,6 +26,10 @@ if (!string.IsNullOrEmpty(databaseUrl))
         var port = uri.Port > 0 ? uri.Port : 5432;
         
         connectionString = $"Host={uri.Host};Port={port};Database={uri.AbsolutePath.TrimStart('/')};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true;";
+        
+        Console.WriteLine($"[Railway Setup] DATABASE_URL found.");
+        Console.WriteLine($"[Railway Setup] Host: {uri.Host}, Port: {port}, User: {username}");
+        Console.WriteLine($"[Railway Setup] Password Length: {password.Length}"); 
     }
     catch (Exception ex)
     {
