@@ -42,6 +42,16 @@ public class SallaWebhookData
 
     [JsonPropertyName("urls")]
     public SallaWebhookUrls? Urls { get; set; }
+
+    // Easy Mode Auth Token Fields
+    [JsonPropertyName("access_token")]
+    public string? AccessToken { get; set; }
+
+    [JsonPropertyName("refresh_token")]
+    public string? RefreshToken { get; set; }
+
+    [JsonPropertyName("expires_in")]
+    public int? ExpiresIn { get; set; }
 }
 
 public class SallaWebhookPrice

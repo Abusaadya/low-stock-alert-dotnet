@@ -9,9 +9,31 @@ builder.Services.AddScoped<SallaAlertApp.Api.Services.ReportService>();
 builder.Services.AddHostedService<SallaAlertApp.Api.Services.ReportScheduler>();
 
 builder.Services.AddControllers();
+
 // Add DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Check for Railway's DATABASE_URL and override if present
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(databaseUrl))
+{
+    try 
+    {
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':');
+        var username = userInfo[0];
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        
+        connectionString = $"Host={uri.Host};Port={uri.Port};Database={uri.AbsolutePath.TrimStart('/')};Username={username};Password={password};Ssl Mode=Require;Trust Server Certificate=true;";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error parsing DATABASE_URL: {ex.Message}");
+    }
+}
+
 builder.Services.AddDbContext<SallaAlertApp.Api.Data.ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(connectionString));
 
 // Add Telegram Service
 builder.Services.AddSingleton<SallaAlertApp.Api.Services.TelegramService>();

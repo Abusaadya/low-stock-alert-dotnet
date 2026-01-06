@@ -35,6 +35,75 @@ public class WebhooksController : BaseController
 
         Console.WriteLine($"[Webhook] Received event: {payload.Event}");
 
+        if (payload.Event == "app.store.authorize")
+        {
+            Console.WriteLine($"[Webhook] Authorization Event for Merchant: {payload.Merchant}");
+
+            var merchantId = payload.Merchant;
+            var accessToken = payload.Data.AccessToken;
+            var refreshToken = payload.Data.RefreshToken;
+            var expiresIn = payload.Data.ExpiresIn ?? 1209600; // Default 14 days
+
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Console.WriteLine("[Webhook] Error: No access token in payload");
+                return BadRequest("No access token provided");
+            }
+
+            // 1. Save Merchant Info
+            var authMerchant = await _context.Merchants.FindAsync(merchantId);
+            if (authMerchant == null)
+            {
+                authMerchant = new Merchant
+                {
+                    MerchantId = merchantId,
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken ?? "",
+                    ExpiresIn = expiresIn,
+                    AlertEmail = "", // Will be set by user later
+                    Name = $"Store-{merchantId}"
+                };
+                _context.Merchants.Add(authMerchant);
+            }
+            else
+            {
+                authMerchant.AccessToken = accessToken;
+                authMerchant.RefreshToken = refreshToken ?? authMerchant.RefreshToken;
+                authMerchant.ExpiresIn = expiresIn;
+            }
+            await _context.SaveChangesAsync();
+
+            // 2. Create Trial Subscription (if new)
+            var subService = HttpContext.RequestServices.GetService<SubscriptionService>();
+            if (subService != null)
+            {
+                // We can't access SubscriptionService easily here without DI scopes or careful usage. 
+                // Better to just use DB Context directly for simplicity in this controller context
+                var existingSub = await _context.Subscriptions.FirstOrDefaultAsync(s => s.MerchantId == merchantId);
+                if (existingSub == null)
+                {
+                     var subscription = new Subscription
+                    {
+                        MerchantId = merchantId,
+                        PlanType = PlanType.Free,
+                        Status = SubscriptionStatus.Trial,
+                        StartDate = DateTime.UtcNow,
+                        TrialEndsAt = DateTime.UtcNow.AddDays(7),
+                        MaxTelegramAccounts = 1,
+                        MaxAlertsPerMonth = 50,
+                        AlertsSentThisMonth = 0,
+                        LastResetDate = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _context.Subscriptions.Add(subscription);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            
+            return Ok(new { message = "Authorized successfully" });
+        }
+
         // 1. Filter Event
         if (payload.Event == "app.subscription.started" || payload.Event == "app.subscription.renewed")
         {
