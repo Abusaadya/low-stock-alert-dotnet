@@ -13,7 +13,12 @@ namespace SallaAlertApp.Api.Controllers;
 public class WebhooksController : BaseController
 {
     private readonly ApplicationDbContext _context;
+    private readonly TelegramService _telegramService;
+    private readonly EmailService _emailService;
     private readonly IHttpClientFactory _httpClientFactory;
+
+    public static string? LastPayload;
+    public static DateTime? LastPayloadTime;
 
     public WebhooksController(ApplicationDbContext context, TelegramService telegramService, EmailService emailService, IHttpClientFactory httpClientFactory)
     {
