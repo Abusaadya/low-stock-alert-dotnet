@@ -1,5 +1,4 @@
 version: 1.0
-runtime: DOCKERFILE
 run:
   network:
     port: 8080
@@ -13,5 +12,4 @@ run:
     - name: TELEGRAM_BOT_TOKEN
       value: "8502439567:AAFKE7u79u9uY70SMG0F1s2GYPh0fQWmAHY"
     - name: Salla__WebhookSecret
-      value: "6c38b83ec176911569172905eee531803ec61cf668eff00ae25459cf70477049"
-
+      value: "YOUR_SALLA_WEBHOOK_SECRET_HERE"
