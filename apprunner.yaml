@@ -1,0 +1,6 @@
+version: 1.0
+runtime: DOCKERFILE
+observations:
+  - Dockerfile is at the root
+network:
+  port: 8080
