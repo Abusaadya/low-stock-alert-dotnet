@@ -1,0 +1,17 @@
+version: 1.0
+runtime: DOCKERFILE
+run:
+  network:
+    port: 8080
+  env:
+    - name: DATABASE_URL
+      value: "Host=salla-alert-db.cm3asqeu25ys.us-east-1.rds.amazonaws.com;Port=5432;Database=SallaAlert;Username=postgres;Password=SalSalAws1$;Ssl Mode=Require;Trust Server Certificate=true;"
+    - name: Salla__ClientId
+      value: "d944872d-f9dd-4cd0-8ce3-3f6418f67e7a"
+    - name: Salla__ClientSecret
+      value: "b206f1753ed013ad74b73f991849d9a08dda41563a4c7ee0f276ecef0e1eaf5f"
+    - name: TELEGRAM_BOT_TOKEN
+      value: "8502439567:AAFKE7u79u9uY70SMG0F1s2GYPh0fQWmAHY"
+    - name: Salla__WebhookSecret
+      value: "6c38b83ec176911569172905eee531803ec61cf668eff00ae25459cf70477049"
+
