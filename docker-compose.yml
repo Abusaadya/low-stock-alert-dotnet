@@ -1,12 +1,15 @@
+version: '3.8'
 services:
   app:
-    image: docker.io/abusaadya/salla-app:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: salla-alert-api
     ports:
       - "80:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=db;Database=SallaAlert;Username=postgres;Password=SalSalAws1$$
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=SallaAlert;Username=postgres;Password=SalSalAws1
       # Add Salla variables here
       - Salla__ClientId=d944872d-f9dd-4cd0-8ce3-3f6418f67e7a
       - Salla__ClientSecret=b206f1753ed013ad74b73f991849d9a08dda41563a4c7ee0f276ecef0e1eaf5f
@@ -21,7 +24,7 @@ services:
     environment:
       - POSTGRES_DB=SallaAlert
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=SalSalAws1$$
+      - POSTGRES_PASSWORD=SalSalAws1
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d SallaAlert"]
       interval: 5s
