@@ -54,7 +54,7 @@ public class WebhooksController : BaseController
 
             // Fetch Merchant Email from Salla
             string? merchantEmail = await GetMerchantEmail(accessToken);
-            Console.WriteLine($"[Webhook] Fetched Merchant Email: {merchantEmail ?? "Not Found"}");
+            Console.WriteLine($"[Webhook] Fetched the Merchant Email: {merchantEmail ?? "Not Found"}");
 
             // 1. Save Merchant Info
             var authMerchant = await _context.Merchants.FindAsync(merchantId);
