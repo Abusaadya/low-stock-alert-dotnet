@@ -35,7 +35,7 @@ public class WebhooksController : BaseController
         LastPayload = JsonSerializer.Serialize(payload);
         LastPayloadTime = DateTime.UtcNow;
 
-        Console.WriteLine($"[Webhook] Received event: {payload.Event}");
+        Console.WriteLine($"[Webhook] Received the event: {payload.Event}");
 
         if (payload.Event == "app.store.authorize")
         {
