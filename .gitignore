@@ -5,3 +5,5 @@ obj/
 *.user
 appsettings.Development.json
 tmp-home/
+./salla-Alert.pem
+.gitignore
