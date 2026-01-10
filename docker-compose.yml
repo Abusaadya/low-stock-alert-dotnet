@@ -11,7 +11,7 @@ services:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=SallaAlert;Username=postgres;Password=SalSalAws1
       - Salla__ClientId=d944872d-f9dd-4cd0-8ce3-3f6418f67e7a
       - Salla__ClientSecret=b206f1753ed013ad74b73f991849d9a08dda41563a4c7ee0f276ecef0e1eaf5f
-      - TELEGRAM_BOT_TOKEN=8502439567:AAFKE7u79u9uY70SMG0F1s2GYPh0fQWmAHY
+      - TELEGRAM_BOT_TOKEN=7953849128:AAFCNrJitYA3fN-dOW6grkrceGPnZJSMJe8
       - RESEND_API_KEY=re_123456789
     depends_on:
       db:
