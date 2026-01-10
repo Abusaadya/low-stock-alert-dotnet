@@ -6,4 +6,4 @@ obj/
 appsettings.Development.json
 tmp-home/
 ./salla-Alert.pem
-.gitignore
+.gitignore.idea/
