@@ -24,7 +24,7 @@ public class EmailService
         {
             // 1. هات الـ API Key اللي انت خدته من موقع Resend
             // أنصحك تطلعه في متغيرات Railway وتسميه RESEND_API_KEY
-            var apiKey = _configuration["RESEND_API_KEY"] ?? "re_shS7...ضع_الكود_هنا";
+            var apiKey = _configuration["RESEND_API_KEY"] ?? "re_123456789";
 
             _logger.LogInformation("🔄 محاولة إرسال إيميل عبر Resend API إلى: {To}", to);
 
